@@ -4,6 +4,8 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 import threading
 import uvicorn
 from presence_detection import detection_loop
+import stt
+import asyncio
 
 # --- CONFIGURABLE PARAMETERS ---
 # Minimum area of face bounding box to be considered 'close' (adjust as needed)
@@ -68,10 +70,13 @@ cap = cv2.VideoCapture(0)  # this will capture video from the webcam
 
 def presence_detection_loop():
     def onSessionStart():
-        manager.broadcast("session_started")
+        stt.stt_session_active = True
+        stt.start_stt_thread()
+        asyncio.run(manager.broadcast("session_started"))
 
     def onSessionEnd():
-        manager.broadcast("session_ended")
+        stt.stt_session_active = False
+        asyncio.run(manager.broadcast("session_ended"))
 
     detection_loop(
         onSessionStart=onSessionStart,
