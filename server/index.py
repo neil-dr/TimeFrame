@@ -76,6 +76,7 @@ def presence_detection_loop():
 
     def onSessionEnd():
         stt.stt_session_active = False
+        stt.stop_stt()
         asyncio.run(manager.broadcast("session_ended"))
 
     detection_loop(

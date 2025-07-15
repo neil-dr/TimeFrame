@@ -8,7 +8,8 @@ from urllib.parse import urlencode
 ASSEMBLYAI_API_KEY = "7afb17bc4d1c45f080dbf28040a6afe0"
 CONNECTION_PARAMS = {
     "sample_rate": 16000,
-    "format_turns": True,
+    "format_turns": False,
+    "max_turn_silence": 300
 }
 API_ENDPOINT_BASE_URL = "wss://streaming.assemblyai.com/v3/ws"
 API_ENDPOINT = f"{API_ENDPOINT_BASE_URL}?{urlencode(CONNECTION_PARAMS)}"
