@@ -1,5 +1,9 @@
 import pyaudio
 from urllib.parse import urlencode
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 FRAMES_PER_BUFFER = 800
 SAMPLE_RATE = 16000
@@ -7,7 +11,7 @@ CHANNELS = 1
 FORMAT = pyaudio.paInt16
 
 # --- Configuration ---
-ASSEMBLYAI_API_KEY = "7afb17bc4d1c45f080dbf28040a6afe0"
+ASSEMBLYAI_API_KEY = os.getenv("ASSEMBLYAI_API_KEY")
 CONNECTION_PARAMS = {
     "sample_rate": SAMPLE_RATE,
     "format_turns": False,

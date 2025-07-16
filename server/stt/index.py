@@ -7,13 +7,15 @@ stop_event = threading.Event()
 
 
 def handle_transcript(data):
-    print(data['transcript'])
+    if data['end_of_turn']:
+        print(data['transcript'])
     watch_silence.reset()
 
 
 def start_stt():
     def handle_timeout():
         stt.stop()
+        print("Session closed")
 
     threading.Thread(
         target=watch_silence,

@@ -16,7 +16,7 @@
    ```bash
    python -m venv venv
    ```
-   or 
+   or
    ```bash
    py -3.10 -m venv venv
    ```
@@ -29,7 +29,8 @@
    ```bash
     pip install -r requirements.txt
    ```
-5. Start the FastAPI server:
+5. Create `.env` in server folder refer `server/example.env`
+6. Start the FastAPI server:
    ```bash
    python index.py
    ```

@@ -15,10 +15,12 @@ class STTService:
     def on_open(self, ws):
         def stream_audio():
             open_mic()
+            print("STT started")
             while not self.stop_event.is_set():
                 data = listen_to_audio()
                 ws.send(data, websocket.ABNF.OPCODE_BINARY)
             close_mic()
+
         self.audio_thread = threading.Thread(target=stream_audio, daemon=True)
         self.audio_thread.start()
 
@@ -31,6 +33,7 @@ class STTService:
         self.stop_event.set()
 
     def on_close(self, ws, code, reason):
+        print("STT stop")
         self.stop_event.set()
 
     def start(self):
