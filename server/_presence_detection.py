@@ -47,6 +47,10 @@ def detection_loop(onSessionStart, onSessionEnd):
             if not ret:
                 continue
 
+            if session_active:
+                # detect face 
+                continue
+
             frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             results = yolo(frame_rgb, verbose=False)[0]
 

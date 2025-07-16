@@ -1,20 +1,9 @@
-import cv2
-from ultralytics import YOLO
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 import threading
 import uvicorn
-from presence_detection import detection_loop
-import stt
-import asyncio
-
-# --- CONFIGURABLE PARAMETERS ---
-# Minimum area of face bounding box to be considered 'close' (adjust as needed)
-DISTANCE_THRESHOLD_AREA = 5000
-# Seconds the face must be continuously detected to start session
-STARE_TIME_LIMIT = 2
-SESSION_END_TIME = 5             # Seconds with no face to end session
-# Path to YOLOv8-face model (user must provide this file)
-YOLO_MODEL_PATH = "./yolov8n-face.pt"
+from presence_detection.index import detection_loop
+from stt.index import start_stt
+from utils.camera_manager import *
 
 # --- FastAPI app and WebSocket manager ---
 app = FastAPI()
@@ -57,44 +46,17 @@ async def websocket_endpoint(websocket: WebSocket):
     except WebSocketDisconnect:
         manager.disconnect(websocket)
 
-# --- Detection loop in a thread ---
-session_active = False
-stare_start_time = None
-last_face_time = None
-
-# dowload it from https://github.com/akanametov/yolo-face
-model = YOLO(YOLO_MODEL_PATH)
-
-cap = cv2.VideoCapture(0)  # this will capture video from the webcam
-
-
-def presence_detection_loop():
-    def onSessionStart():
-        stt.stt_session_active = True
-        stt.start_stt_thread()
-        asyncio.run(manager.broadcast("session_started"))
-
-    def onSessionEnd():
-        stt.stt_session_active = False
-        stt.stop_stt()
-        asyncio.run(manager.broadcast("session_ended"))
-
-    detection_loop(
-        onSessionStart=onSessionStart,
-        onSessionEnd=onSessionEnd,
-    )
-
-
-def start_detection_thread():
-    t = threading.Thread(target=presence_detection_loop, daemon=True)
-    t.start()
-
-# Start detection loop in background when server starts
-
 
 @app.on_event("startup")
 def on_startup():
-    start_detection_thread()
+    try:
+        open_camera()
+        while True:
+            detection_loop()  # breaks when user stare for 2s
+            start_stt()
+    except Exception as e:
+        close_camera()
+        print(f"Error {e}")
 
 
 if __name__ == "__main__":
