@@ -27,7 +27,7 @@ class STTService:
             finally:
                 close_mic()
 
-        self.audio_thread = threading.Thread(target=stream_audio, daemon=True)
+        self.audio_thread = threading.Thread(target=stream_audio)
         self.audio_thread.start()
 
     def on_message(self, ws, message):
@@ -36,6 +36,7 @@ class STTService:
             self.on_transcript(data)
 
     def on_error(self, ws, error):
+        self._audio_exception = error
         self.stop_event.set()
 
     def on_close(self, ws, code, reason):

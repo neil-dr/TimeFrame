@@ -12,12 +12,19 @@ last_face_time = None
 
 def detection_loop():
     global stare_start_time, last_face_time
+    failures = 0
 
     try:
         while True:
             ret, frame = capture_frames()
             if not ret:
-                continue
+                if failures >= MAX_CAM_FAILURES:
+                    raise IOError(
+                        "Could not open video capture device")
+                else:
+                    failures = failures+1
+            else:
+                failures = 0
 
             is_face_in_front_of_camera = detect_faces(frame=frame)
 

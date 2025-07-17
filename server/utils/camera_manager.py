@@ -10,8 +10,7 @@ def open_camera():
     if not cap.isOpened():
         cap.release()
         cap = None
-        print("Failed to open camera")
-        raise IOError("Could not open video capture device")
+        raise IOError("Could not open camera")
     print("Camera open")
 
 
@@ -21,8 +20,7 @@ def capture_frames():
         ret, frame = cap.read()
         return ret, frame
     else:
-        print('No camera is open')
-        raise
+        raise IOError("Tried to capture frame while camera was not open")
 
 
 def close_camera():

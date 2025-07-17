@@ -18,9 +18,8 @@ def open_mic():
         )
         print('Microphone is open')
     except Exception as e:
-        print(f'Failed to open microphone, Error: {e}')
         audio.terminate()
-        raise
+        raise IOError("Failed to open microphone")
 
 
 def listen_to_audio():
@@ -28,7 +27,8 @@ def listen_to_audio():
         return stream.read(
             FRAMES_PER_BUFFER, exception_on_overflow=False)
     else:
-        print('Microphone stream is not open')
+        raise IOError(
+            "Tried to read audio stream while microphone was not open")
 
 
 def close_mic():

@@ -4,6 +4,7 @@ from stt.stt_service import STTService
 from stt.silence_detector import watch_silence
 
 stop_event = threading.Event()
+silence_exception = [None]
 
 
 def handle_transcript(data):
@@ -19,7 +20,7 @@ def start_stt():
 
     t = threading.Thread(
         target=watch_silence,
-        args=(handle_timeout,),
+        args=(handle_timeout, silence_exception),
     )
     t.start()
 
@@ -27,3 +28,6 @@ def start_stt():
     stt.start()
 
     t.join()
+
+    if silence_exception[0]:
+        raise silence_exception[0]
