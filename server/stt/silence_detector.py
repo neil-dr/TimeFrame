@@ -1,11 +1,11 @@
 import time
-from utils.camera_manager import capture_frames
+from utils.camera_manager import capture_frames, close_camera
 from presence_detection.detect_frontal_face import detect_faces
 
 SILENCE_LIMIT = 5
 
 
-def watch_silence(stop_event, on_timeout):
+def watch_silence(on_timeout):
     last_silence_time = time.time()
 
     def reset():
@@ -14,11 +14,22 @@ def watch_silence(stop_event, on_timeout):
 
     watch_silence.reset = reset
 
+    MAX_CAM_FAILURES = 2
+    failures = 0
     while True:
         if time.time() - last_silence_time > SILENCE_LIMIT:
             ret, frame = capture_frames()
-            if ret and not detect_faces(frame):
+            print(ret)
+            if not ret:
+                if failures >= MAX_CAM_FAILURES:
+                    close_camera()
+                    raise IOError("Could not open video capture device")
+                else:
+                    failures = failures+1
+            else:
+                failures = 0
 
+            if ret and not detect_faces(frame):
                 on_timeout()
                 return
             reset()

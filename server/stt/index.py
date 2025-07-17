@@ -17,11 +17,13 @@ def start_stt():
         stt.stop()
         print("Session closed")
 
-    threading.Thread(
+    t = threading.Thread(
         target=watch_silence,
-        args=(stop_event, handle_timeout),
-        daemon=True
-    ).start()
+        args=(handle_timeout,),
+    )
+    t.start()
 
     stt = STTService(handle_transcript, stop_event)
     stt.start()
+
+    t.join()

@@ -11,15 +11,21 @@ class STTService:
         self.stop_event = stop_event
         self.ws_app = None
         self.audio_thread = None
+        self._audio_exception: Exception | None = None
 
     def on_open(self, ws):
         def stream_audio():
-            open_mic()
-            print("STT started")
-            while not self.stop_event.is_set():
-                data = listen_to_audio()
-                ws.send(data, websocket.ABNF.OPCODE_BINARY)
-            close_mic()
+            try:
+                open_mic()
+                print("STT started")
+                while not self.stop_event.is_set():
+                    data = listen_to_audio()
+                    ws.send(data, websocket.ABNF.OPCODE_BINARY)
+            except Exception as e:
+                self.stop()
+                self._audio_exception = e
+            finally:
+                close_mic()
 
         self.audio_thread = threading.Thread(target=stream_audio, daemon=True)
         self.audio_thread.start()
@@ -47,6 +53,12 @@ class STTService:
             on_close=self.on_close
         )
         self.ws_app.run_forever()
+
+        if self.audio_thread:
+            self.audio_thread.join()
+
+        if self._audio_exception:
+            raise self._audio_exception
 
     def stop(self):
         self.stop_event.set()
