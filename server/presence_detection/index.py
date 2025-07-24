@@ -1,8 +1,7 @@
 import time
 import cv2
 from types import *
-from presence_detection.detect_frontal_face import detect_faces
-from utils.camera_manager import capture_frames
+from presence_detection.detect_person import detect_person
 from config.presence_detection import *
 
 # --- Session state ---
@@ -12,21 +11,10 @@ last_face_time = None
 
 def detection_loop():
     global stare_start_time, last_face_time
-    failures = 0
 
     try:
         while True:
-            ret, frame = capture_frames()
-            if not ret:
-                if failures >= MAX_CAM_FAILURES:
-                    raise IOError(
-                        "Could not open video capture device")
-                else:
-                    failures = failures+1
-            else:
-                failures = 0
-
-            is_face_in_front_of_camera = detect_faces(frame=frame)
+            is_face_in_front_of_camera = detect_person()
 
             if is_face_in_front_of_camera:
                 current_time = time.time()
@@ -40,7 +28,7 @@ def detection_loop():
             else:
                 stare_start_time = None  # reset stare
 
-            cv2.imshow("YOLO + MediaPipe Frontal Detection", frame)
+            
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
     except:
