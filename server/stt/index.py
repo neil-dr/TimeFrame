@@ -6,5 +6,3 @@ def start_stt():
     # Start the video streaming service connection
     stt = STTService.get_instance()
     stt.start()
-    # Get the last sentence and pass it to OpenAI
-    print("# Get the last sentence and pass it to OpenAI")

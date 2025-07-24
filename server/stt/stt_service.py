@@ -6,6 +6,7 @@ from config.stt import API_ENDPOINT, ASSEMBLYAI_API_KEY, SILENCE_LIMIT
 from presence_detection.detect_person import detect_person
 import time
 
+
 class STTService:
     _instance = None
     _initialized = False
@@ -75,6 +76,7 @@ class STTService:
                 print(data['transcript'])
                 self.muted = True
                 print("Shifting to Thinking mode. Mic is now muted.")
+                # Get the last sentence and pass it to OpenAI - async code afterwards
 
     def on_error(self, ws, error):
         self._audio_exception = error
