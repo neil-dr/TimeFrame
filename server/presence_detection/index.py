@@ -3,6 +3,7 @@ import cv2
 from types import *
 from presence_detection.detect_person import detect_person
 from config.presence_detection import *
+from utils.websocket_manager import manager
 
 # --- Session state ---
 stare_start_time = None
@@ -11,7 +12,7 @@ last_face_time = None
 
 def detection_loop():
     global stare_start_time, last_face_time
-
+    manager.broadcast("idle")
     try:
         while True:
             is_face_in_front_of_camera = detect_person()
@@ -28,7 +29,6 @@ def detection_loop():
             else:
                 stare_start_time = None  # reset stare
 
-            
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
     except:

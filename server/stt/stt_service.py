@@ -4,6 +4,7 @@ import json
 from utils.mic_manager import open_mic, close_mic, listen_to_audio
 from config.stt import API_ENDPOINT, ASSEMBLYAI_API_KEY, SILENCE_LIMIT
 from presence_detection.detect_person import detect_person
+from utils.websocket_manager import manager
 import time
 
 
@@ -65,6 +66,7 @@ class STTService:
             finally:
                 close_mic()
 
+        manager.broadcast("listening")
         self.audio_thread = threading.Thread(target=stream_audio, daemon=True)
         self.audio_thread.start()
 

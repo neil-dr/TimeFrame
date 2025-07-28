@@ -1,63 +1,67 @@
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
 import threading
+import asyncio
 import uvicorn
 from presence_detection.index import detection_loop
 from stt.index import start_stt
-from utils.camera_manager import *
+from utils.camera_manager import open_camera, close_camera
+from utils.websocket_manager import manager
 
-# --- FastAPI app and WebSocket manager ---
 app = FastAPI()
 
-
-class ConnectionManager:
-    def __init__(self):
-        self.active_connections: list[WebSocket] = []
-        self.lock = threading.Lock()
-
-    async def connect(self, websocket: WebSocket):
-        await websocket.accept()
-        with self.lock:
-            self.active_connections.append(websocket)
-
-    def disconnect(self, websocket: WebSocket):
-        with self.lock:
-            if websocket in self.active_connections:
-                self.active_connections.remove(websocket)
-
-    async def broadcast(self, message: str):
-        with self.lock:
-            connections = list(self.active_connections)
-        for connection in connections:
-            try:
-                await connection.send_text(message)
-            except Exception:
-                self.disconnect(connection)
+# — Thread & control event —
+core_thread: threading.Thread | None = None
+stop_event = threading.Event()
+thread_lock = threading.Lock()
 
 
-manager = ConnectionManager()
+def core_loop():
+    open_camera()
+    try:
+        while not stop_event.is_set():
+            detection_loop()      # blocks until stare
+            if stop_event.is_set():
+                break
+            # await manager.broadcast("listening")
+            start_stt()           # blocks until STT ends
+    finally:
+        close_camera()
+
+
+@app.get("/start-loop")
+def start_loop():
+    global core_thread
+    with thread_lock:
+        if core_thread and core_thread.is_alive():
+            raise HTTPException(status_code=400, detail="Loop already running")
+        stop_event.clear()
+        core_thread = threading.Thread(target=core_loop, daemon=True)
+        core_thread.start()
+    return {"status": "started"}
+
+
+@app.get("/stop-loop")
+def stop_loop():
+    stop_event.set()
+    return {"status": "stopping"}
 
 
 @app.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket):
-    await manager.connect(websocket)
+async def websocket_endpoint(ws: WebSocket):
+    await manager.connect(ws)
     try:
         while True:
-            await websocket.receive_text()  # Keep connection alive
+            await ws.receive_text()
     except WebSocketDisconnect:
-        manager.disconnect(websocket)
+        manager.disconnect(ws)
+        # auto‑stop if no clients remain
+        if not manager.active_connections:
+            stop_event.set()
 
 
 @app.on_event("startup")
-def on_startup():
-    try:
-        open_camera()
-        while True:
-            detection_loop()  # breaks when user stare for 2s
-            start_stt()
-    except Exception as e:
-        close_camera()
-        print(f"Error {e}")
-
+async def on_ws_startup():
+    manager.loop = asyncio.get_running_loop()
 
 if __name__ == "__main__":
-    uvicorn.run("index:app", host="127.0.0.1", port=8000, reload=False)
+    uvicorn.run("index:app", host="127.0.0.1", port=8000)
