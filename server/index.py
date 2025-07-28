@@ -19,11 +19,8 @@ def core_loop():
     open_camera()
     try:
         while not stop_event.is_set():
-            detection_loop()      # blocks until stare
-            if stop_event.is_set():
-                break
-            # await manager.broadcast("listening")
-            start_stt()           # blocks until STT ends
+            detection_loop()
+            start_stt()
     finally:
         close_camera()
 

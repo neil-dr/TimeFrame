@@ -78,6 +78,7 @@ class STTService:
                 print(data['transcript'])
                 self.muted = True
                 print("Shifting to Thinking mode. Mic is now muted.")
+                manager.broadcast("thinking")
                 # Get the last sentence and pass it to OpenAI - async code afterwards
 
     def on_error(self, ws, error):
