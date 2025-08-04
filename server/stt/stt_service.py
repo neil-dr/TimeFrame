@@ -6,6 +6,7 @@ from config.stt import API_ENDPOINT, ASSEMBLYAI_API_KEY, SILENCE_LIMIT
 from presence_detection.detect_person import detect_person
 from utils.websocket_manager import manager
 import time
+import random
 
 
 class STTService:
@@ -80,6 +81,27 @@ class STTService:
                 print("Shifting to Thinking mode. Mic is now muted.")
                 manager.broadcast("thinking")
                 # Get the last sentence and pass it to OpenAI - async code afterwards
+                # DUMMY thinking mode start
+                DUMMY_REPLIES = [
+                    "Ah, a fascinating question… Give me a moment.",
+                    "Let me recall the details from the archives…",
+                    "Thinking… History holds many layers.",
+                    "Interesting. Reflecting on that now.",
+                    "One second… I’ve studied this before.",
+                    "Digging through the past—just a moment.",
+                    "Let me piece this together for you."
+                ]
+                threading.Timer(
+                    1.0,
+                    lambda: manager.broadcast(
+                        event='speaking', data=random.choice(DUMMY_REPLIES))
+                ).start()
+                # DUMMY thinking mode end
+                # await for speaking-end event from frontend and than restart the thinking mode
+            else:
+                # send data['transcript'] as in event
+                manager.broadcast(event="stt-transcription",
+                                  data=data['transcript'])
 
     def on_error(self, ws, error):
         self._audio_exception = error

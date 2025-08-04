@@ -1,6 +1,7 @@
 from fastapi import WebSocket
 import threading
 import asyncio
+import json
 
 
 class ConnectionManager:
@@ -19,14 +20,16 @@ class ConnectionManager:
             if websocket in self.active_connections:
                 self.active_connections.remove(websocket)
 
-    def broadcast(self, message: str):
+    def broadcast(self, event: str, data: str = None):
         with self.lock:
             targets = list(self.active_connections)
 
         for ws in targets:
-            print(f"emit (sync): {message}")
             asyncio.run_coroutine_threadsafe(
-                ws.send_text(message),
+                ws.send_text(json.dumps({
+                    "event": event,
+                    "data": data
+                })),
                 self.loop
             )
 

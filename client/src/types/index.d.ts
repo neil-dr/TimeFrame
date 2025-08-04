@@ -1,5 +1,9 @@
-type Modes = "idle" | "listening" | "thinking"
+type Modes = "idle" | "listening" | "thinking" | "speaking" | "stt-transcription"
 type SocketEvents = Modes | "start-video-connection"
+type SocketResponse = {
+  event: SocketEvents,
+  data: string | null
+}
 
 interface StartLoopResponse {
   "status": "started"
@@ -7,4 +11,23 @@ interface StartLoopResponse {
 
 interface StopLoopResponse {
   "status": "stop"
+}
+
+interface IceServer {
+  urls: string | string[];
+  username?: string;
+  credential?: string;
+}
+
+interface CreateStreamResponse {
+  id: string;
+  offer: RTCSessionDescriptionInit;
+  ice_servers: IceServer[];
+  session_id: string;
+}
+
+interface SendMessageResponse {
+  id: string;
+  status: string;
+  // …extend with whatever fields you read from the response
 }
