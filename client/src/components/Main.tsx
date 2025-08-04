@@ -11,7 +11,7 @@ export default function Main() {
   const { connect, sendText } = useVideoProviderService(videoRef)
 
   useEffect(() => {
-    connect();
+    // connect();
     const ws = getSocket();
     ws.onopen = () => setWsStatus("Connected");
     ws.onclose = () => {

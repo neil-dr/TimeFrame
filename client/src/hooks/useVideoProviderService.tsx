@@ -1,4 +1,5 @@
 import { useRef, type RefObject } from 'react';
+import { getSocket } from '../apis/socket';
 
 /**
  * useDIDAgentStream – React hook for manual‑mode D‑ID Agents
@@ -9,7 +10,6 @@ import { useRef, type RefObject } from 'react';
  */
 
 // ▸ CONFIG – move to envs in prod
-const IDLE_SRC = './idle.mp4';   // keep the constant in one place
 const AGENT_ID = 'v2_agt_xgX-Y0FQ';
 const DID = {
   API_KEY_B64: 'ZmVwaWszOTUwOUBmb2JveHMuY29t:flqm-4RFO9SufOL6WhbeF',
@@ -57,15 +57,18 @@ export default function useDIDAgentStream(videoRef: RefObject<HTMLVideoElement |
   };
 
   function wireDataChannel(dc: RTCDataChannel) {
-    dc.onopen = () => console.log('[DC] open');
-    dc.onclose = () => console.log('[DC] close');
-
     dc.onmessage = (event) => {
       const msg = event.data;
       /* 1 ▸ D-ID control messages */
       if (msg === 'stream/done') {
         console.log('🎬 stream/done  ← speech clip finished');
         backToIdle();
+
+        // notify backend to get back to listening
+        const ws = getSocket();
+
+        const message = JSON.stringify({ event: "back-to-listening" });
+        ws.send(message)
         return;
       }
     };

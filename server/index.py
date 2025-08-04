@@ -1,6 +1,7 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
 import threading
 import asyncio
+import json
 import uvicorn
 from presence_detection.index import detection_loop
 from stt.index import start_stt
@@ -46,14 +47,7 @@ def stop_loop():
 @app.websocket("/ws")
 async def websocket_endpoint(ws: WebSocket):
     await manager.connect(ws)
-    try:
-        while True:
-            await ws.receive_text()
-    except WebSocketDisconnect:
-        manager.disconnect(ws)
-        # auto‑stop if no clients remain
-        if not manager.active_connections:
-            stop_event.set()
+    await manager.handle_events(ws)
 
 
 @app.on_event("startup")
