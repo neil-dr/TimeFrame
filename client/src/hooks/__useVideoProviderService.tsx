@@ -1,5 +1,5 @@
 import { useRef, type RefObject } from 'react';
-import { getSocket } from '../apis/socket';
+import { socket } from '../apis/socket';
 
 /**
  * useDIDAgentStream – React hook for manual‑mode D‑ID Agents
@@ -10,12 +10,12 @@ import { getSocket } from '../apis/socket';
  */
 
 // ▸ CONFIG – move to envs in prod
-const ELEVENT_LABS_VOICE_ID = 'uYXf8XasLslADfZ2MB4u'
-const IMAGE_URL = 'https://res.cloudinary.com/dj3vgnj0u/image/upload/v1754403283/f64843fcb102f734b8f26aa3f18e3b36_lb1qr9.jpg'
+// const AGENT_ID = 'v2_agt_6IgyYSZA'; // square
+const AGENT_ID = 'v2_agt_lYDbaqPP'; // 9:16 portrait
 const DID = {
   API_KEY_B64: 'ZmVwaWszOTUwOUBmb2JveHMuY29t:flqm-4RFO9SufOL6WhbeF',
   ROOT: 'https://api.d-id.com',
-  SERVICE: 'talks',
+  SERVICE: 'agents',
 } as const;
 
 // ▸ TYPES
@@ -51,7 +51,7 @@ export default function useDIDAgentStream(idleRef: RefObject<HTMLVideoElement | 
   const handleIceCandidate = async (e: RTCPeerConnectionIceEvent) => {
     if (!e.candidate || !streamId.current) return;
     const { candidate, sdpMid, sdpMLineIndex } = e.candidate;
-    await didFetch(`/${DID.SERVICE}/streams/${streamId.current}/ice`, {
+    await didFetch(`/${DID.SERVICE}/${AGENT_ID}/streams/${streamId.current}/ice`, {
       method: 'POST',
       body: JSON.stringify({ candidate, sdpMid, sdpMLineIndex, session_id: sessionId.current }),
     });
@@ -63,19 +63,16 @@ export default function useDIDAgentStream(idleRef: RefObject<HTMLVideoElement | 
       /* 1 ▸ D-ID control messages */
       if (msg === 'stream/done') {
         console.log('🎬 stream/done  ← speech clip finished');
+        restartIdle()
         fadeOut();
 
         // notify backend to get back to listening
-        const ws = getSocket();
-
         const message = JSON.stringify({ event: "back-to-listening" });
-        ws.send(message)
+        socket.send(message)
         return;
       } else if (msg === "stream/started") {
         console.log('🎬 stream/started  ← speech clip started');
-        restartIdle()
         fadeIn();
-
       }
     };
   }
@@ -100,24 +97,17 @@ export default function useDIDAgentStream(idleRef: RefObject<HTMLVideoElement | 
     const [videoTrack] = remote.getVideoTracks();
 
     /* … inside handleTrack … */
-    // videoTrack.addEventListener('unmute', () => {
-    //   if (!remoteRef .current) return;
+    videoTrack.addEventListener('unmute', () => {
+      if (!remoteRef.current) return;
 
-    //   // attach stream
-    //   remoteRef .current.srcObject = remote;
-    //   remoteRef .current.onloadeddata = () => {
-    //     remoteRef .current!.onloadeddata = null;
-    //     fadeIn();                      // avatar now visible
-    //     remoteRef .current!.play().catch(console.error);
-    //   };
-    // });
-    // attach stream
-    remoteRef.current!.srcObject = remote;
-    remoteRef.current!.onloadeddata = () => {
-      remoteRef.current!.onloadeddata = null;
-      fadeIn();                      // avatar now visible
-      remoteRef.current!.play().catch(console.error);
-    };
+      // attach stream
+      remoteRef.current!.srcObject = remote;
+      remoteRef.current!.onloadeddata = () => {
+        remoteRef.current!.onloadeddata = null;
+        // fadeIn();                      // avatar now visible
+        remoteRef.current!.play().catch(console.error);
+      };
+    });
 
     /* hide again when finished */
     videoTrack.addEventListener('mute', () => {
@@ -129,15 +119,9 @@ export default function useDIDAgentStream(idleRef: RefObject<HTMLVideoElement | 
 
   /** Establish WebRTC & start video */
   const connect = async () => {
-    const res = await didFetch(`/${DID.SERVICE}/streams`, {
+    const res = await didFetch(`/${DID.SERVICE}/${AGENT_ID}/streams`, {
       method: 'POST',
-      body: JSON.stringify({
-        stream_warmup: true,
-        source_url: IMAGE_URL,
-        config: {
-          stitch: true
-        }
-      }),
+      // body: JSON.stringify({ "stream_warmup": true }),
     });
     if (!res.ok) throw new Error(`stream create failed ${res.status}`);
     const { id, offer, ice_servers, session_id } = (await res.json()) as CreateStreamRes;
@@ -155,12 +139,11 @@ export default function useDIDAgentStream(idleRef: RefObject<HTMLVideoElement | 
       wireDataChannel(e.channel);
     });
 
-
     await pc.current.setRemoteDescription(offer);
     const answer = await pc.current.createAnswer();
     await pc.current.setLocalDescription(answer);
 
-    await didFetch(`/${DID.SERVICE}/streams/${id}/sdp`, {
+    await didFetch(`/${DID.SERVICE}/${AGENT_ID}/streams/${id}/sdp`, {
       method: 'POST',
       body: JSON.stringify({ answer, session_id }),
     });
@@ -171,19 +154,11 @@ export default function useDIDAgentStream(idleRef: RefObject<HTMLVideoElement | 
     if (!streamId.current || !sessionId.current) throw new Error('Stream not ready');
 
     const payload = {
-      script: {
-        type: 'text',
-        provider: {
-          type: "elevenlabs",
-          voice_id: ELEVENT_LABS_VOICE_ID
-        },
-        input: text
-      },
+      script: { type: 'text', input: text, ssml: true },
       session_id: sessionId.current,
-      config: { stitch: true, fluent: true }
     };
 
-    const res = await didFetch(`/${DID.SERVICE}/streams/${streamId.current}`, {
+    const res = await didFetch(`/${DID.SERVICE}/${AGENT_ID}/streams/${streamId.current}`, {
       method: 'POST',
       body: JSON.stringify(payload),
     });
@@ -195,12 +170,11 @@ export default function useDIDAgentStream(idleRef: RefObject<HTMLVideoElement | 
   /** Cleanup */
   const destroy = async () => {
     if (streamId.current) {
-      await didFetch(`/${DID.SERVICE}/streams/${streamId.current}`, {
+      await didFetch(`/${DID.SERVICE}/${AGENT_ID}/streams/${streamId.current}`, {
         method: 'DELETE',
         body: JSON.stringify({ session_id: sessionId.current }),
       });
     }
-    // if (remoteRef .current) remoteRef .current.srcObject = null;
     if (pc.current) {
       pc.current.close();
       pc.current.removeEventListener('icecandidate', handleIceCandidate);

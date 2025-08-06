@@ -1,4 +1,4 @@
-from fastapi import WebSocket
+from fastapi import WebSocket, WebSocketDisconnect
 import threading
 import asyncio
 import json
@@ -8,6 +8,7 @@ import time
 class ConnectionManager:
     def __init__(self):
         self.active_connections: list[WebSocket] = []
+        self.connected = False
         self.lock = threading.Lock()
         self.loop = None
 
@@ -15,32 +16,37 @@ class ConnectionManager:
         await websocket.accept()
         with self.lock:
             self.active_connections.append(websocket)
+            self.connected = True
 
     def disconnect(self, websocket: WebSocket):
         with self.lock:
             if websocket in self.active_connections:
                 self.active_connections.remove(websocket)
+                self.connected = False
 
     async def handle_events(self, websocket: WebSocket):
-        while True:
-            raw = await websocket.receive_text()
+        try:
+            while True:
+                try:
+                    if self.connected:
+                        raw = await websocket.receive_text()
+                        payload = json.loads(raw)
+                        event, data = payload.get("event"), payload.get("data")
 
-            try:
-                payload = json.loads(raw)
-                event, data = payload.get("event"), payload.get("data")
+                        if event == "back-to-listening":
+                            from stt.stt_service import STTService
+                            service = STTService.get_instance()
+                            if service.connected:
+                                service.muted = False
+                                service.user_speak = False
+                                service.stt_start_time = time.time()
+                                print("🔊  Mic un-muted, back to listening")
+                except (ValueError, KeyError):
+                    print("bad payload")
 
-                if event == "back-to-listening":
-                    from stt.stt_service import STTService
-                    service = STTService.get_instance()
-                    if service.connected:
-                        service.muted = False
-                        service.user_speak = False
-                        service.stt_start_time = time.time()
-                        print("🔊  Mic un-muted, back to listening")
-
-            except (ValueError, KeyError):
-                print("bad payload")
-                continue
+        except WebSocketDisconnect:
+            print("client disconnected")
+            self.disconnect(websocket)
 
     def broadcast(self, event: str, data: str = None):
         with self.lock:
