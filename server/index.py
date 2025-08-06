@@ -1,12 +1,13 @@
 from fastapi import FastAPI, WebSocket,  HTTPException, status
 import threading
 import asyncio
-import json
 import uvicorn
 from presence_detection.index import detection_loop
 from stt.index import start_stt
 from utils.camera_manager import open_camera, close_camera
+from utils.mic_manager import close_mic
 from utils.websocket_manager import manager
+from utils.state_manager import get_mode
 
 app = FastAPI()
 
@@ -20,8 +21,8 @@ def core_loop():
     open_camera()
     try:
         while not stop_event.is_set():
-            detection_loop()
-            start_stt()
+            detection_loop(stop_event)
+            start_stt(stop_event)
     finally:
         close_camera()
 
@@ -46,13 +47,26 @@ def start_loop():
 @app.get("/stop-loop")
 def stop_loop():
     stop_event.set()
+    manager.broadcast("idle")
+    close_camera()
+    close_mic()
     return {"status": "stopping"}
+
+
+@app.get("/state")
+def get_state():
+    mode = get_mode()
+    web_socket_connected = manager.connected
+    core_loop_running = core_thread.is_alive() if core_thread else False
+    data = {"mode": mode, "web_socket_connected": web_socket_connected,
+            "core_loop_running": core_loop_running}
+    return data
 
 
 @app.websocket("/ws")
 async def websocket_endpoint(ws: WebSocket):
     await manager.connect(ws)
-    await manager.handle_events(ws)
+    await manager.handle_events(ws, stop_event)
 
 
 @app.on_event("startup")

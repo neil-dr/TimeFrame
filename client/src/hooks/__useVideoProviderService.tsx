@@ -32,10 +32,11 @@ interface CreateStreamRes {
 }
 interface SendMessageRes { id: string; status: string }
 
-export default function useDIDAgentStream(idleRef: RefObject<HTMLVideoElement | null>, remoteRef: RefObject<HTMLVideoElement | null>) {
+export default function useDIDAgentStream(idleRef: RefObject<HTMLVideoElement | null>, remoteRef: RefObject<HTMLVideoElement | null>, setMode: React.Dispatch<React.SetStateAction<Modes>>) {
   const sessionId = useRef<string | null>(null);
   const streamId = useRef<string | null>(null);
   const pc = useRef<RTCPeerConnection | null>(null);
+  const streamStartTime = useRef<number | null>(null);
 
   // helper with auth header
   const didFetch = (path: string, init: RequestInit = {}) =>
@@ -62,6 +63,14 @@ export default function useDIDAgentStream(idleRef: RefObject<HTMLVideoElement | 
       const msg = event.data;
       /* 1 ▸ D-ID control messages */
       if (msg === 'stream/done') {
+        if (streamStartTime.current) {
+          const endTime = Date.now();
+          const durationMs = endTime - streamStartTime.current;
+          const seconds = (durationMs / 1000).toFixed(2);
+          const minutes = (durationMs / 60000).toFixed(2);
+          console.log(`⏱️ Video duration: ${seconds}s (~${minutes} min)`);
+          streamStartTime.current = null;
+        }
         console.log('🎬 stream/done  ← speech clip finished');
         restartIdle()
         fadeOut();
@@ -69,9 +78,11 @@ export default function useDIDAgentStream(idleRef: RefObject<HTMLVideoElement | 
         // notify backend to get back to listening
         const message = JSON.stringify({ event: "back-to-listening" });
         socket.send(message)
+        setMode("listening")
         return;
       } else if (msg === "stream/started") {
         console.log('🎬 stream/started  ← speech clip started');
+        streamStartTime.current = Date.now();
         fadeIn();
       }
     };

@@ -1,8 +1,10 @@
 from fastapi import WebSocket, WebSocketDisconnect
+from utils.state_manager import set_mode
 import threading
 import asyncio
 import json
 import time
+from threading import Event
 
 
 class ConnectionManager:
@@ -24,11 +26,11 @@ class ConnectionManager:
                 self.active_connections.remove(websocket)
                 self.connected = False
 
-    async def handle_events(self, websocket: WebSocket):
+    async def handle_events(self, websocket: WebSocket, stop_event: Event):
         try:
             while True:
                 try:
-                    if self.connected:
+                    if self.connected and not stop_event.is_set():
                         raw = await websocket.receive_text()
                         payload = json.loads(raw)
                         event, data = payload.get("event"), payload.get("data")
@@ -60,6 +62,7 @@ class ConnectionManager:
                 })),
                 self.loop
             )
+        set_mode(event)
 
 
 manager = ConnectionManager()

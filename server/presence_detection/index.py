@@ -4,17 +4,18 @@ from types import *
 from presence_detection.detect_person import detect_person
 from config.presence_detection import *
 from utils.websocket_manager import manager
+from threading import Event
 
 # --- Session state ---
 stare_start_time = None
 last_face_time = None
 
 
-def detection_loop():
+def detection_loop(stop_event: Event):
     global stare_start_time, last_face_time
     manager.broadcast("idle")
     try:
-        while True:
+        while not stop_event.is_set():
             is_face_in_front_of_camera = detect_person()
 
             if is_face_in_front_of_camera:

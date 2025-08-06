@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { socket } from '../apis/socket';
 import useVideoProviderService from '../hooks/__useVideoProviderService';
+import ModeBadge from './ModeBadge';
 
 type WSStatus = "Connected" | "Disconnected" | "Error";
 export default function Main() {
@@ -10,14 +11,10 @@ export default function Main() {
   const [transcription, setTranscription] = useState<string | null>(null)
   const idleRef = useRef<HTMLVideoElement>(null)
   const remoteRef = useRef<HTMLVideoElement>(null)
-  const { connect, sendText } = useVideoProviderService(idleRef, remoteRef)
+  const { connect, sendText } = useVideoProviderService(idleRef, remoteRef, setMode)
 
   useEffect(() => {
-    console.log(wsStatus);
-  }, [wsStatus])
-
-  useEffect(() => {
-    const ws = socket;                         // the singleton instance
+    const ws = socket;
 
     const handleOpen = () => setWsStatus('Connected');
     const handleClose = () => { setWsStatus('Disconnected'); setMode('idle'); };
@@ -83,6 +80,7 @@ export default function Main() {
                transition-opacity duration-1000 opacity-0"
         />
       </div>
+      <ModeBadge mode={mode} />
 
       <div className='absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent' />
       {transcription && <span
