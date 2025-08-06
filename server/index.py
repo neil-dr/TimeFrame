@@ -1,4 +1,4 @@
-from fastapi import FastAPI, WebSocket,  HTTPException
+from fastapi import FastAPI, WebSocket,  HTTPException, status
 import threading
 import asyncio
 import json
@@ -28,6 +28,11 @@ def core_loop():
 
 @app.get("/start-loop")
 def start_loop():
+    if not manager.connected:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No WebSocket client connected",
+        )
     global core_thread
     with thread_lock:
         if core_thread and core_thread.is_alive():
