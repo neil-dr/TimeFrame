@@ -43,6 +43,8 @@ class ConnectionManager:
                                 service.user_speak = False
                                 service.stt_start_time = time.time()
                                 print("🔊  Mic un-muted, back to listening")
+                        elif event == "speaking":
+                            set_mode("speaking")
                 except (ValueError, KeyError):
                     print("bad payload")
 

@@ -19,4 +19,4 @@ def think(input_txt):
         "source": "lincoln",
         "content": output_txt
     })
-    manager.broadcast(event="speaking", data=output_txt)  # trigger speak mode
+    manager.broadcast(event="start-speaking", data=output_txt)  # trigger speak mode

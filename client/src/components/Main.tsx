@@ -25,12 +25,10 @@ export default function Main() {
         connect();
       } else if (socketResponse.event == "stt-transcription") {
         setTranscription(socketResponse.data!)
+      } else if (socketResponse.event == "start-speaking") {
+        sendText(socketResponse.data!)
+        setTranscription(null)
       } else { // modes
-        if (socketResponse.event == "speaking") {
-          console.log(socketResponse.data)
-          sendText(socketResponse.data!)
-          setTranscription(null)
-        }
         setMode(socketResponse.event);
       }
     };

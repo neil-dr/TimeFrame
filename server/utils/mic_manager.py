@@ -1,8 +1,9 @@
 import pyaudio
+from pyaudio import PyAudio
 from config.stt import *
 
 stream = None
-audio = None
+audio: PyAudio | None = None
 
 
 def open_mic():
@@ -35,12 +36,13 @@ def close_mic():
     global stream, audio
     if stream:
         try:
-
             stream.stop_stream()
         except:
             pass
             stream.close()
+        stream = None
 
     if audio:
         audio.terminate()
-    print('Microphone is closed')
+        audio = None
+        print('Microphone is closed')

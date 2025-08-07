@@ -1,6 +1,7 @@
 import cv2
+from cv2 import VideoCapture
 
-cap = None
+cap: VideoCapture | None = None
 
 
 def open_camera():
@@ -16,7 +17,7 @@ def open_camera():
 
 def capture_frames():
     global cap
-    if cap:
+    if cap.isOpened():
         ret, frame = cap.read()
         return ret, frame
     else:
@@ -25,7 +26,7 @@ def capture_frames():
 
 def close_camera():
     global cap
-    if cap:
+    if cap.isOpened():
         cap.release()
         cv2.destroyAllWindows()
         print("Camera closed")
