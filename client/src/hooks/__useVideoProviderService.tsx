@@ -32,7 +32,7 @@ interface CreateStreamRes {
 }
 interface SendMessageRes { id: string; status: string }
 
-export default function useDIDAgentStream(idleRef: RefObject<HTMLVideoElement | null>, remoteRef: RefObject<HTMLVideoElement | null>, setMode: React.Dispatch<React.SetStateAction<Modes>>) {
+export default function useDIDAgentStream(idleRef: RefObject<HTMLVideoElement | null>, remoteRef: RefObject<HTMLVideoElement | null>, mode: Modes, setMode: React.Dispatch<React.SetStateAction<Modes>>) {
   const sessionId = useRef<string | null>(null);
   const streamId = useRef<string | null>(null);
   const pc = useRef<RTCPeerConnection | null>(null);
@@ -82,8 +82,10 @@ export default function useDIDAgentStream(idleRef: RefObject<HTMLVideoElement | 
         return;
       } else if (msg === "stream/started") {
         const message = JSON.stringify({ event: "speaking" });
-        socket.send(message)
-        setMode("speaking")
+        if (mode == "thinking") {
+          socket.send(message)
+          setMode("speaking")
+        }
         console.log('🎬 stream/started  ← speech clip started');
         streamStartTime.current = Date.now();
         fadeIn();

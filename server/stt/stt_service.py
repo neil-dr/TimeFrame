@@ -48,7 +48,6 @@ class STTService:
             self.stt_start_time = time.time()
 
             try:
-                print(f"self.connected and not self.stop_event.is_set() {self.connected and not self.stop_event.is_set()}")
                 while self.connected and not self.stop_event.is_set():
                     # silence → presence logic
                     if not self.user_speak and (time.time() - self.stt_start_time > SILENCE_LIMIT):

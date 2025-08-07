@@ -30,10 +30,10 @@ class ConnectionManager:
         try:
             while True:
                 try:
+                    raw = await websocket.receive_text()
+                    payload = json.loads(raw)
+                    event, data = payload.get("event"), payload.get("data")
                     if self.connected and not stop_event.is_set():
-                        raw = await websocket.receive_text()
-                        payload = json.loads(raw)
-                        event, data = payload.get("event"), payload.get("data")
 
                         if event == "back-to-listening":
                             from stt.stt_service import STTService

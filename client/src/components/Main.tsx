@@ -11,7 +11,7 @@ export default function Main() {
   const [transcription, setTranscription] = useState<string | null>(null)
   const idleRef = useRef<HTMLVideoElement>(null)
   const remoteRef = useRef<HTMLVideoElement>(null)
-  const { connect, sendText } = useVideoProviderService(idleRef, remoteRef, setMode)
+  const { connect, sendText } = useVideoProviderService(idleRef, remoteRef, mode, setMode)
 
   useEffect(() => {
     const ws = socket;
