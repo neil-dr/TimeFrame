@@ -46,7 +46,11 @@ def start_loop():
 
 @app.get("/stop-loop")
 def stop_loop():
+    global core_thread
     stop_event.set()
+    if core_thread: # waiting for core thread to end
+        core_thread.join()
+        core_thread = None
     manager.broadcast("idle")
     close_camera()
     close_mic()

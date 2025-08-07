@@ -19,5 +19,4 @@ def think(input_txt):
         "source": "lincoln",
         "content": output_txt
     })
-    print(chat)
     manager.broadcast(event="start-speaking", data=output_txt)  # trigger speak mode

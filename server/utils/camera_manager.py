@@ -8,7 +8,7 @@ def open_camera():
     global cap
     if cap is None:
         cap = cv2.VideoCapture(0)
-    if not cap.isOpened():
+    if cap and not cap.isOpened():
         cap.release()
         cap = None
         raise IOError("Could not open camera")
@@ -17,7 +17,7 @@ def open_camera():
 
 def capture_frames():
     global cap
-    if cap.isOpened():
+    if cap and cap.isOpened():
         ret, frame = cap.read()
         return ret, frame
     else:
@@ -26,7 +26,8 @@ def capture_frames():
 
 def close_camera():
     global cap
-    if cap.isOpened():
+    if cap and cap.isOpened():
         cap.release()
         cv2.destroyAllWindows()
         print("Camera closed")
+    cap = None
