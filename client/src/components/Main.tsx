@@ -11,7 +11,7 @@ export default function Main() {
   const [transcription, setTranscription] = useState<string | null>(null)
   const idleRef = useRef<HTMLVideoElement>(null)
   const remoteRef = useRef<HTMLVideoElement>(null)
-  const { connect, sendText } = useVideoProviderService(idleRef, remoteRef, mode, setMode)
+  const { connected, connect, sendText, destroy } = useVideoProviderService(idleRef, remoteRef, mode, setMode)
 
   useEffect(() => {
     const ws = socket;
@@ -26,8 +26,17 @@ export default function Main() {
       } else if (socketResponse.event == "stt-transcription") {
         setTranscription(socketResponse.data!)
       } else if (socketResponse.event == "start-speaking") {
-        sendText(socketResponse.data!)
-        setTranscription(null)
+        if (connected) {
+          sendText(socketResponse.data!)
+          setTranscription(null)
+        } else {
+          connect().then(() => {
+            sendText(socketResponse.data!)
+            setTranscription(null)
+          })
+        }
+      } else if (socketResponse.event == "stop-video-connection") {
+        destroy()
       } else { // modes
         setMode(socketResponse.event);
       }

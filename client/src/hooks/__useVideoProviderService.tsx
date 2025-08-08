@@ -1,4 +1,4 @@
-import { useRef, type RefObject } from 'react';
+import { useRef, useState, type RefObject } from 'react';
 import { socket } from '../apis/socket';
 
 /**
@@ -33,6 +33,7 @@ interface CreateStreamRes {
 interface SendMessageRes { id: string; status: string }
 
 export default function useDIDAgentStream(idleRef: RefObject<HTMLVideoElement | null>, remoteRef: RefObject<HTMLVideoElement | null>, mode: Modes, setMode: React.Dispatch<React.SetStateAction<Modes>>) {
+  const [connected, setConnected] = useState(false)
   const sessionId = useRef<string | null>(null);
   const streamId = useRef<string | null>(null);
   const pc = useRef<RTCPeerConnection | null>(null);
@@ -82,10 +83,8 @@ export default function useDIDAgentStream(idleRef: RefObject<HTMLVideoElement | 
         return;
       } else if (msg === "stream/started") {
         const message = JSON.stringify({ event: "speaking" });
-        if (mode == "thinking") {
-          socket.send(message)
-          setMode("speaking")
-        }
+        socket.send(message)
+        setMode("speaking")
         console.log('🎬 stream/started  ← speech clip started');
         streamStartTime.current = Date.now();
         fadeIn();
@@ -107,6 +106,13 @@ export default function useDIDAgentStream(idleRef: RefObject<HTMLVideoElement | 
   const fadeOut = () => {
     if (remoteRef.current) remoteRef.current.style.opacity = '0';
   };
+
+  const handleConnectionStateChange = () => {
+    const st = pc.current!.connectionState;
+    if (st === 'disconnected' || st === 'failed' || st === 'closed') {
+      setConnected(false)
+    }
+  }
 
   const handleTrack = (ev: RTCTrackEvent) => {
     const [remote] = ev.streams;
@@ -149,6 +155,7 @@ export default function useDIDAgentStream(idleRef: RefObject<HTMLVideoElement | 
     wireDataChannel(dc);
 
     pc.current.addEventListener('icecandidate', handleIceCandidate);
+    pc.current.addEventListener('connectionstatechange', handleConnectionStateChange)
     pc.current.addEventListener('track', handleTrack);
     pc.current.addEventListener('datachannel', e => {
       console.log('inside data chanel')
@@ -163,6 +170,7 @@ export default function useDIDAgentStream(idleRef: RefObject<HTMLVideoElement | 
       method: 'POST',
       body: JSON.stringify({ answer, session_id }),
     });
+    setConnected(true)
   };
 
   /** Speak _exactly_ `text` (no LLM involved) */
@@ -199,7 +207,8 @@ export default function useDIDAgentStream(idleRef: RefObject<HTMLVideoElement | 
     }
     streamId.current = null;
     sessionId.current = null;
+    setConnected(false)
   };
 
-  return { connect, sendText, destroy };
+  return { connected, connect, sendText, destroy };
 }

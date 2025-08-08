@@ -8,13 +8,24 @@ from utils.camera_manager import open_camera, close_camera
 from utils.mic_manager import close_mic
 from utils.websocket_manager import manager
 from utils.state_manager import get_mode
-
-app = FastAPI()
+from contextlib import asynccontextmanager
 
 # — Thread & control event —
 core_thread: threading.Thread | None = None
 stop_event = threading.Event()
 thread_lock = threading.Lock()
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup phase
+    manager.loop = asyncio.get_running_loop()
+    yield
+    # Shutdown phase (optional cleanup)
+    # await some_async_cleanup()
+    print("FastAPI shutting down")
+
+app = FastAPI(lifespan=lifespan)
 
 
 def core_loop():
@@ -48,7 +59,7 @@ def start_loop():
 def stop_loop():
     global core_thread
     stop_event.set()
-    if core_thread: # waiting for core thread to end
+    if core_thread:  # waiting for core thread to end
         core_thread.join()
         core_thread = None
     manager.broadcast("idle")
@@ -72,10 +83,6 @@ async def websocket_endpoint(ws: WebSocket):
     await manager.connect(ws)
     await manager.handle_events(ws, stop_event)
 
-
-@app.on_event("startup")
-async def on_ws_startup():
-    manager.loop = asyncio.get_running_loop()
 
 if __name__ == "__main__":
     uvicorn.run("index:app", host="127.0.0.1", port=8000)
