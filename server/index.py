@@ -1,101 +1,81 @@
-import cv2
-from ultralytics import YOLO
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, WebSocket,  HTTPException, status
 import threading
-import uvicorn
-from presence_detection import detection_loop
-import stt
 import asyncio
+import uvicorn
+from presence_detection.index import detection_loop
+from stt.index import start_stt
+from utils.camera_manager import open_camera, close_camera
+from utils.mic_manager import close_mic
+from utils.websocket_manager import manager
+from utils.state_manager import get_mode
 
-# --- CONFIGURABLE PARAMETERS ---
-# Minimum area of face bounding box to be considered 'close' (adjust as needed)
-DISTANCE_THRESHOLD_AREA = 5000
-# Seconds the face must be continuously detected to start session
-STARE_TIME_LIMIT = 2
-SESSION_END_TIME = 5             # Seconds with no face to end session
-# Path to YOLOv8-face model (user must provide this file)
-YOLO_MODEL_PATH = "./yolov8n-face.pt"
-
-# --- FastAPI app and WebSocket manager ---
 app = FastAPI()
 
-
-class ConnectionManager:
-    def __init__(self):
-        self.active_connections: list[WebSocket] = []
-        self.lock = threading.Lock()
-
-    async def connect(self, websocket: WebSocket):
-        await websocket.accept()
-        with self.lock:
-            self.active_connections.append(websocket)
-
-    def disconnect(self, websocket: WebSocket):
-        with self.lock:
-            if websocket in self.active_connections:
-                self.active_connections.remove(websocket)
-
-    async def broadcast(self, message: str):
-        with self.lock:
-            connections = list(self.active_connections)
-        for connection in connections:
-            try:
-                await connection.send_text(message)
-            except Exception:
-                self.disconnect(connection)
+# — Thread & control event —
+core_thread: threading.Thread | None = None
+stop_event = threading.Event()
+thread_lock = threading.Lock()
 
 
-manager = ConnectionManager()
+def core_loop():
+    open_camera()
+    try:
+        while not stop_event.is_set():
+            detection_loop(stop_event)
+            start_stt(stop_event)
+    finally:
+        close_camera()
+
+
+@app.get("/start-loop")
+def start_loop():
+    if not manager.connected:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No WebSocket client connected",
+        )
+    global core_thread
+    with thread_lock:
+        if core_thread and core_thread.is_alive():
+            raise HTTPException(status_code=400, detail="Loop already running")
+        stop_event.clear()
+        core_thread = threading.Thread(target=core_loop, daemon=True)
+        core_thread.start()
+    return {"status": "started"}
+
+
+@app.get("/stop-loop")
+def stop_loop():
+    global core_thread
+    stop_event.set()
+    if core_thread: # waiting for core thread to end
+        core_thread.join()
+        core_thread = None
+    manager.broadcast("idle")
+    close_camera()
+    close_mic()
+    return {"status": "stopping"}
+
+
+@app.get("/state")
+def get_state():
+    mode = get_mode()
+    web_socket_connected = manager.connected
+    core_loop_running = core_thread.is_alive() if core_thread else False
+    data = {"mode": mode, "web_socket_connected": web_socket_connected,
+            "core_loop_running": core_loop_running}
+    return data
 
 
 @app.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket):
-    await manager.connect(websocket)
-    try:
-        while True:
-            await websocket.receive_text()  # Keep connection alive
-    except WebSocketDisconnect:
-        manager.disconnect(websocket)
-
-# --- Detection loop in a thread ---
-session_active = False
-stare_start_time = None
-last_face_time = None
-
-# dowload it from https://github.com/akanametov/yolo-face
-model = YOLO(YOLO_MODEL_PATH)
-
-cap = cv2.VideoCapture(0)  # this will capture video from the webcam
-
-
-def presence_detection_loop():
-    def onSessionStart():
-        stt.stt_session_active = True
-        stt.start_stt_thread()
-        asyncio.run(manager.broadcast("session_started"))
-
-    def onSessionEnd():
-        stt.stt_session_active = False
-        stt.stop_stt()
-        asyncio.run(manager.broadcast("session_ended"))
-
-    detection_loop(
-        onSessionStart=onSessionStart,
-        onSessionEnd=onSessionEnd,
-    )
-
-
-def start_detection_thread():
-    t = threading.Thread(target=presence_detection_loop, daemon=True)
-    t.start()
-
-# Start detection loop in background when server starts
+async def websocket_endpoint(ws: WebSocket):
+    await manager.connect(ws)
+    await manager.handle_events(ws, stop_event)
 
 
 @app.on_event("startup")
-def on_startup():
-    start_detection_thread()
-
+async def on_ws_startup():
+    manager.loop = asyncio.get_running_loop()
 
 if __name__ == "__main__":
-    uvicorn.run("index:app", host="127.0.0.1", port=8000, reload=False)
+    uvicorn.run("index:app", host="127.0.0.1", port=8000)
