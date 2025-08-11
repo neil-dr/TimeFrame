@@ -3,10 +3,7 @@ import { socket } from '../apis/socket';
 import useVideoProviderService from '../hooks/__useVideoProviderService';
 import ModeBadge from './ModeBadge';
 
-type WSStatus = "Connected" | "Disconnected" | "Error";
 export default function Main() {
-  const [wsStatus, setWsStatus] = useState<WSStatus>("Disconnected");
-
   const [mode, setMode] = useState<Modes>("idle");
   const [transcription, setTranscription] = useState<string | null>(null)
   const idleRef = useRef<HTMLVideoElement>(null)
@@ -17,9 +14,9 @@ export default function Main() {
   useEffect(() => {
     const ws = socket;
 
-    const handleOpen = () => setWsStatus('Connected');
-    const handleClose = () => { setWsStatus('Disconnected'); setMode('idle'); };
-    const handleError = () => setWsStatus('Error');
+    const handleOpen = () => console.log('Web socket connected');
+    const handleClose = () => { setMode('idle'); };
+    const handleError = () => console.error('Failed to connect to web socket');
     const handleMsg = (event: MessageEvent<Modes>) => {
       const socketResponse: SocketResponse = JSON.parse(event.data)
       if (socketResponse.event === "start-video-connection") {
