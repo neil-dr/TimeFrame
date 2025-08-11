@@ -26,16 +26,10 @@ export default function Main() {
       } else if (socketResponse.event == "stt-transcription") {
         setTranscription(socketResponse.data!)
       } else if (socketResponse.event == "start-speaking") {
-        if (connected) {
-          sendText(socketResponse.data!)
-          setTranscription(null)
-        } else {
-          connect().then(() => {
-            sendText(socketResponse.data!)
-            setTranscription(null)
-          })
-        }
+        sendText(socketResponse.data!)
+        setTranscription(null)
       } else if (socketResponse.event == "stop-video-connection") {
+        console.log('stop-video-connection')
         destroy()
       } else { // modes
         setMode(socketResponse.event);
@@ -59,6 +53,12 @@ export default function Main() {
       ws.removeEventListener('message', handleMsg);
     };
   }, []);
+
+  useEffect(() => {
+    if (!connected && mode != "idle") {
+      connect()
+    }
+  }, [connected])
 
 
   return (

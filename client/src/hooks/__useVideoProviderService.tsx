@@ -110,6 +110,7 @@ export default function useDIDAgentStream(idleRef: RefObject<HTMLVideoElement | 
   const handleConnectionStateChange = () => {
     const st = pc.current!.connectionState;
     if (st === 'disconnected' || st === 'failed' || st === 'closed') {
+      console.log('D-ID session Disconnected')
       setConnected(false)
     }
   }
