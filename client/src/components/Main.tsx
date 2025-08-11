@@ -12,6 +12,7 @@ export default function Main() {
   const idleRef = useRef<HTMLVideoElement>(null)
   const remoteRef = useRef<HTMLVideoElement>(null)
   const { connected, connect, sendText, destroy } = useVideoProviderService(idleRef, remoteRef, mode, setMode)
+  const pendingTextsRef = useRef<string[]>([]);
 
   useEffect(() => {
     const ws = socket;
@@ -26,7 +27,11 @@ export default function Main() {
       } else if (socketResponse.event == "stt-transcription") {
         setTranscription(socketResponse.data!)
       } else if (socketResponse.event == "start-speaking") {
-        sendText(socketResponse.data!)
+        if (connected) {
+          sendText(socketResponse.data!)
+        } else {
+          pendingTextsRef.current.push(socketResponse.data!);
+        }
         setTranscription(null)
       } else if (socketResponse.event == "stop-video-connection") {
         console.log('stop-video-connection')
@@ -59,6 +64,17 @@ export default function Main() {
       connect()
     }
   }, [connected])
+
+  useEffect(() => {
+    if (!connected) return;
+    (async () => {
+      const queue = pendingTextsRef.current;
+      pendingTextsRef.current = [];
+      for (const msg of queue) {
+        await sendText(msg);
+      }
+    })();
+  }, [connected, sendText]);
 
 
   return (
