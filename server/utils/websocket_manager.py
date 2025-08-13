@@ -54,6 +54,7 @@ class ConnectionManager:
 
     def broadcast(self, event: str, data: str = None):
         with self.lock:
+            print(event)
             targets = list(self.active_connections)
 
         for ws in targets:

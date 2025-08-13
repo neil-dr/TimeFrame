@@ -6,6 +6,8 @@
   [yolov8n-face.pt](https://github.com/akanametov/yolo-face/releases/download/v0.0.0/yolov8n-face.pt)
   - Place the downloaded file inside the `server` directory.
 - Python **3.7 to 3.10** is required (due to MediaPipe compatibility).
+- Use Edge Browser
+- Open Edge and goto `edge://settings/privacy/sitePermissions/allPermissions/mediaAutoplay`. Add Site `http://localhost:5173` and set `Control if audio and video play automatically on sites` to `Allow`
 
 ---
 
@@ -34,3 +36,6 @@
    ```bash
    python index.py
    ```
+
+## How to run frontend
+1. Open 

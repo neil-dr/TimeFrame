@@ -64,6 +64,7 @@ class STTService:
 
                     chunk = listen_to_audio()
                     ws.send(chunk, websocket.ABNF.OPCODE_BINARY)
+                print(f"audio streaming stop {self.connected} {not self.stop_event.is_set()}")
             except Exception as e:
                 self._audio_exception = e
                 print(f"audio exception: {self._audio_exception}")
@@ -72,6 +73,7 @@ class STTService:
                 close_mic()
 
         self.audio_thread = threading.Thread(target=stream_audio, daemon=True)
+        self.connected = True
         self.audio_thread.start()
 
     def on_message(self, ws, message):
@@ -82,13 +84,14 @@ class STTService:
                 print(data['transcript'])
                 self.muted = True
                 print("Shifting to Thinking mode. Mic is now muted.")
-                think(data['transcript']) # start thinking mode
+                think(data['transcript'])  # start thinking mode
             else:
                 # send data['transcript'] as in event
                 manager.broadcast(event="stt-transcription",
                                   data=data['transcript'])
 
     def on_error(self, ws, error):
+        print(f"Error from AAI {error}")
         self._audio_exception = error
 
     def on_close(self, ws, code, reason):
@@ -107,7 +110,7 @@ class STTService:
         )
         wst = threading.Thread(target=self.ws_app.run_forever, daemon=True)
         wst.start()
-        
+
         while not stop_event.is_set() and wst.is_alive():
             time.sleep(0.1)
 
@@ -121,3 +124,4 @@ class STTService:
         self.connected = False
         if self.ws_app:
             self.ws_app.close()
+            manager.broadcast(event="stop-video-connection")
