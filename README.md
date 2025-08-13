@@ -36,6 +36,3 @@
    ```bash
    python index.py
    ```
-
-## How to run frontend
-1. Open 
