@@ -132,10 +132,6 @@ export default function useDIDAgentStream(idleRef: RefObject<HTMLVideoElement | 
       };
     });
 
-    /* hide again when finished */
-    videoTrack.addEventListener('mute', () => {
-      console.log('muted')
-    }, { once: true });
     videoTrack.addEventListener('ended', fadeOut);
     videoTrack.addEventListener('inactive', fadeOut);
   };
