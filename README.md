@@ -8,6 +8,7 @@
 - Python **3.7 to 3.10** is required (due to MediaPipe compatibility).
 - Use Edge Browser
 - Open Edge and goto `edge://settings/privacy/sitePermissions/allPermissions/mediaAutoplay`. Add Site `http://localhost:5173` and set `Control if audio and video play automatically on sites` to `Allow`
+- Import [Timeframe.postman_collection.json](https://github.com/neil-dr/TimeFrame/blob/main/Timeframe.postman_collection.json) in postman
 
 ---
 
@@ -31,6 +32,11 @@
    ```bash
     pip install -r requirements.txt
    ```
+
+## 🚀 How to Use
+1. Use Get State API in postman and make sure the websocket connected
+2. Use Start loop api to start the core loop (On first start the presence detection take some time as the camera is taking permission to wait a while)
+3. Use stop loop api to stop the core loop
 5. Create `.env` in server folder refer `server/example.env`
 6. Start the FastAPI server:
    ```bash
