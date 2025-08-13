@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { socket } from '../apis/socket';
 import useVideoProviderService from '../hooks/__useVideoProviderService';
-import ModeBadge from './ModeBadge';
 import ModeIcon from './ModeIcon';
+import FullscreenButton from './FullscreenButton';
 
 export default function Main() {
   const [mode, setMode] = useState<Modes>("idle");
@@ -78,10 +78,7 @@ export default function Main() {
   return (
     <div className='relative w-fit mx-auto'>
       <div className="relative aspect-[9/16] h-screen">
-        {<span
-          className='absolute top-5 right-5 text-white drop-shadow-lg text-sm font-medium bg-white/10 backdrop-blur-md rounded-xl px-4 py-2 border border-white/20 shadow-xl cursor-pointer hover:bg-white/20 hover:border-white/30 transition-all duration-200 active:scale-95'>
-          {mode}
-        </span>}
+        <FullscreenButton />
         {/* idle layer */}
         <video
           ref={idleRef}
