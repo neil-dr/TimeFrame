@@ -1,0 +1,77 @@
+{
+	"info": {
+		"_postman_id": "ebe933e9-335a-4e2d-b0d8-6d4a42aff37a",
+		"name": "Timeframe",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "34319477",
+		"_collection_link": "https://solar-satellite-49393.postman.co/workspace/binar~6565c802-7e49-4ce6-805f-36f4345cdb28/collection/34319477-ebe933e9-335a-4e2d-b0d8-6d4a42aff37a?action=share&source=collection_link&creator=34319477"
+	},
+	"item": [
+		{
+			"name": "Start Loop",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://127.0.0.1:8000/start-loop",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"start-loop"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Stop Loop",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://127.0.0.1:8000/stop-loop",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"stop-loop"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get State",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://127.0.0.1:8000/state",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"state"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
