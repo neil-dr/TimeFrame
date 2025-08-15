@@ -49,6 +49,7 @@ class STTService:
 
             try:
                 while self.connected and not self.stop_event.is_set():
+                    print('self.muted', self.muted)
                     # silence → presence logic
                     if not self.user_speak and (time.time() - self.stt_start_time > SILENCE_LIMIT):
                         if detect_person():

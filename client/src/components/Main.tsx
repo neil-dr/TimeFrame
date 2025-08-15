@@ -3,13 +3,40 @@ import { socket } from '../apis/socket';
 import useVideoProviderService from '../hooks/__useVideoProviderService';
 import ModeIcon from './ModeIcon';
 import FullscreenButton from './FullscreenButton';
+import Text from './Text';
 
 export default function Main() {
   const [mode, setMode] = useState<Modes>("idle");
   const [transcription, setTranscription] = useState<string | null>(null)
+  const speakingText = useRef('')
   const idleRef = useRef<HTMLVideoElement>(null)
   const remoteRef = useRef<HTMLVideoElement>(null)
-  const { connected, connect, sendText, destroy } = useVideoProviderService(idleRef, remoteRef, mode, setMode)
+
+  function onStartSpeaking() {
+    setTranscription(''); // reset output
+
+    if (speakingText.current.length === 0) return;
+    const words = speakingText.current.trim().split(/\s+/);
+
+    let i = 0;
+    let currentText = ''; // local accumulator
+
+    const id = setInterval(() => {
+      currentText += (currentText ? ' ' : '') + words[i];
+      if (currentText != '' && currentText != ' ')
+        setTranscription(currentText);
+      i++;
+      if (i >= words.length) {
+        clearInterval(id);
+        setTimeout(() => {
+          setTranscription(null); // ✅ clear after last word delay
+        }, 500); // optional delay before clearing (tweakable)
+      }
+
+    }, 300);
+  }
+
+  const { connected, connect, sendText, destroy } = useVideoProviderService(idleRef, remoteRef, onStartSpeaking, setMode)
   const pendingTextsRef = useRef<string[]>([]);
 
   useEffect(() => {
@@ -27,6 +54,7 @@ export default function Main() {
       } else if (socketResponse.event == "start-speaking") {
         if (connected) {
           sendText(socketResponse.data!)
+          speakingText.current = socketResponse.data!
         } else {
           pendingTextsRef.current.push(socketResponse.data!);
         }
@@ -35,6 +63,9 @@ export default function Main() {
         console.log('stop-video-connection')
         destroy()
       } else { // modes
+        if (socketResponse.event == "listening" && speakingText.current != "") {
+          setTranscription(null)
+        }
         setMode(socketResponse.event);
       }
     };
@@ -69,6 +100,7 @@ export default function Main() {
       const queue = pendingTextsRef.current;
       pendingTextsRef.current = [];
       for (const msg of queue) {
+        speakingText.current = msg
         await sendText(msg);
       }
     })();
@@ -99,15 +131,11 @@ export default function Main() {
         />
       </div>
       <div className='absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent' />
-      <div className='absolute bottom-10 left-2 flex items-center gap-2'>
-        <ModeIcon mode={mode} />
-        <span
-          className='text-white drop-shadow-lg text-sm font-medium bg-white/10 backdrop-blur-md rounded-xl px-4 py-2 border border-white/20 shadow-xl cursor-pointer hover:bg-white/20 hover:border-white/30 transition-all duration-200 active:scale-95'>
-          {mode == "idle" ? 'Ask me a question' :
-            mode == "listening" ? (transcription || "I'm listening....") :
-              mode == "thinking" ? "I'm thinking...." :
-                mode == "speaking" ? "The thinking mode is currently under development so this is a dummy Speech." : "Ask me a question"}
-        </span>
+      <div className='absolute bottom-[5%] left-0 right-0 p-6'>
+        <div className='flex items-center gap-2'>
+          <ModeIcon mode={mode} className='shrink-0' />
+          <Text mode={mode} transcription={transcription} />
+        </div>
       </div>
     </div>
   )

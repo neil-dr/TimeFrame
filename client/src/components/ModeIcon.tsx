@@ -94,7 +94,7 @@ const ModeIcon = ({ mode, className = '' }: { mode: Modes, className?: string })
         }
       `}</style>
 
-      <div className={`w-16 h-16 transition-all duration-700 ease-out ${className}`}>
+      <div className={`w-16 aspect-square transition-all duration-700 ease-out ${className}`}>
         {/* Active icon */}
         <img
           src={getIconSrc()}
