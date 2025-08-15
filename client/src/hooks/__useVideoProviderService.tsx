@@ -11,9 +11,9 @@ import { socket } from '../apis/socket';
 
 // ▸ CONFIG – move to envs in prod
 // const AGENT_ID = 'v2_agt_6IgyYSZA'; // square
-const AGENT_ID = 'v2_agt_lYDbaqPP'; // 9:16 portrait
+const AGENT_ID = 'v2_agt_XBJHQzYy'; // 9:16 portrait
 const DID = {
-  API_KEY_B64: 'ZmVwaWszOTUwOUBmb2JveHMuY29t:flqm-4RFO9SufOL6WhbeF',
+  API_KEY_B64: 'dmlwaXBvMjM3NkBmdXJzZWUuY29t:F_8nJytQuSHf8PhZoFjz_',
   ROOT: 'https://api.d-id.com',
   SERVICE: 'agents',
 } as const;
@@ -32,7 +32,7 @@ interface CreateStreamRes {
 }
 interface SendMessageRes { id: string; status: string }
 
-export default function useDIDAgentStream(idleRef: RefObject<HTMLVideoElement | null>, remoteRef: RefObject<HTMLVideoElement | null>, mode: Modes, setMode: React.Dispatch<React.SetStateAction<Modes>>) {
+export default function useDIDAgentStream(idleRef: RefObject<HTMLVideoElement | null>, remoteRef: RefObject<HTMLVideoElement | null>, onStartSpeaking: () => void, setMode: React.Dispatch<React.SetStateAction<Modes>>) {
   const [connected, setConnected] = useState(false)
   const sessionId = useRef<string | null>(null);
   const streamId = useRef<string | null>(null);
@@ -88,6 +88,7 @@ export default function useDIDAgentStream(idleRef: RefObject<HTMLVideoElement | 
         console.log('🎬 stream/started  ← speech clip started');
         streamStartTime.current = Date.now();
         fadeIn();
+        onStartSpeaking()
       }
     };
   }
