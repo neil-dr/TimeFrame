@@ -36,13 +36,12 @@ class ConnectionManager:
                     if self.connected and not stop_event.is_set():
 
                         if event == "back-to-listening":
-                            from stt.stt_service import STTService
-                            service = STTService.get_instance()
-                            if service.connected:
-                                service.muted = False
-                                service.user_speak = False
-                                service.stt_start_time = time.time()
-                                print("🔊  Mic un-muted, back to listening")
+                            from stt.index import get_stt_instance
+                            stt = get_stt_instance()
+                            stt.muted = False
+                            stt.user_speak = False
+                            stt.stt_start_time = time.time()
+                            print("🔊  Mic un-muted, back to listening")
                         elif event == "speaking":
                             set_mode("speaking")
                 except (ValueError, KeyError):
