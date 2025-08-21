@@ -3,7 +3,6 @@ from stt.stt_offline import OfflineSTT
 from utils.websocket_manager import manager
 from utils.internet import is_connected
 from threading import Event
-import time
 
 
 def get_stt_instance():
@@ -25,4 +24,5 @@ def start_stt(stop_event: Event, start_video_connection=False):
         manager.broadcast("start-video-connection")
 
     stt = get_stt_instance()
+    stt.reset()
     stt.start(stop_event)

@@ -40,6 +40,11 @@ class STTService:
         """Global access point to the single STTService."""
         return cls()
 
+    def reset(self):
+        self.muted = False
+        self.user_speak = False
+        self.stt_start_time = time.time()
+
     def on_open(self, ws):
         def stream_audio():
             open_mic()
@@ -65,7 +70,8 @@ class STTService:
 
                     chunk = listen_to_audio()
                     ws.send(chunk, websocket.ABNF.OPCODE_BINARY)
-                print(f"audio streaming stop {self.connected} {not self.stop_event.is_set()}")
+                print(
+                    f"audio streaming stop {self.connected} {not self.stop_event.is_set()}")
             except Exception as e:
                 self._audio_exception = e
                 print(f"audio exception: {self._audio_exception}")

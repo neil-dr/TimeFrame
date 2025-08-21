@@ -139,8 +139,8 @@ export default function Main() {
         {/* idle layer */}
         <video
           ref={idleRef}
-          // src={'./idle-square.mp4'}
-          src={'./idle-portrait.mp4'}
+          // src={'./idle-portrait.mp4'}
+          src={'./lincoln-1.mp4'}
           loop
           muted
           autoPlay
