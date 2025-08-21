@@ -35,6 +35,17 @@
    ```bash
     pip install -r requirements.txt
    ```
+5. All dependencies
+   * `mediapipe`
+   * `fastapi`
+   * `opencv-python`
+   * `ultralytics`
+   * `websocket-client`
+   * `omegaconf`
+   * `pyaudio`
+   * `dotenv`
+   * `vosk`
+   * `uvicorn`
 
 ## 🚀 How to Use
 1. Use Get State API in postman and make sure the websocket connected
