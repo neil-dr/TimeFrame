@@ -31,11 +31,11 @@
    ```bash
    venv\Scripts\activate
    ```
-4. Install dependencies from `requirements.txt`:
+4. All dependencies
    ```bash
-    pip install -r requirements.txt
+   pip install mediapipe fastapi opencv-python ultralytics websocket-client omegaconf pyaudio python-dotenv vosk uvicorn
    ```
-5. All dependencies
+
    * `mediapipe`
    * `fastapi`
    * `opencv-python`
