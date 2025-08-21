@@ -33,7 +33,7 @@ def core_loop():
     try:
         while not stop_event.is_set():
             detection_loop(stop_event)
-            start_stt(stop_event)
+            start_stt(stop_event=stop_event, start_video_connection=True)
     finally:
         close_camera()
 

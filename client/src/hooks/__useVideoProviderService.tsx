@@ -10,10 +10,15 @@ import { socket } from '../apis/socket';
  */
 
 // ▸ CONFIG – move to envs in prod
-// const AGENT_ID = 'v2_agt_6IgyYSZA'; // square
-const AGENT_ID = 'v2_agt_XBJHQzYy'; // 9:16 portrait
+// Agent IDs:
+// Portrait: v2_agt_XBJHQzYy
+// Lincoln 1 ID: v2_agt_53wdAW15
+// Lincoln 2 ID: v2_agt_WT3Wug2m
+// Lincoln 3 ID: v2_agt_YiDY_feh
+const AGENT_ID = 'v2_agt_53wdAW15';
 const DID = {
-  API_KEY_B64: 'dmlwaXBvMjM3NkBmdXJzZWUuY29t:F_8nJytQuSHf8PhZoFjz_',
+  API_KEY_B64: 'YXBpZXRlcm5hbGxlZ2FjeUBnbWFpbC5jb20:6q7jdn1OpcAYrzVyIXrIA', // ELAI 
+  // API_KEY_B64: 'dmlwaXBvMjM3NkBmdXJzZWUuY29t:F_8nJytQuSHf8PhZoFjz_', // Test
   ROOT: 'https://api.d-id.com',
   SERVICE: 'agents',
 } as const;
@@ -63,7 +68,7 @@ export default function useDIDAgentStream(idleRef: RefObject<HTMLVideoElement | 
     dc.onmessage = (event) => {
       const msg = event.data;
       /* 1 ▸ D-ID control messages */
-      if (msg === 'stream/done') {
+      if (msg.startsWith('stream/done')) {
         if (streamStartTime.current) {
           const endTime = Date.now();
           const durationMs = endTime - streamStartTime.current;
@@ -81,7 +86,7 @@ export default function useDIDAgentStream(idleRef: RefObject<HTMLVideoElement | 
         socket.send(message)
         setMode("listening")
         return;
-      } else if (msg === "stream/started") {
+      } else if (msg.startsWith("stream/started")) {
         const message = JSON.stringify({ event: "speaking" });
         socket.send(message)
         setMode("speaking")

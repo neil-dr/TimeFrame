@@ -5,6 +5,9 @@
 - Download the YOLOv8n face detection model:
   [yolov8n-face.pt](https://github.com/akanametov/yolo-face/releases/download/v0.0.0/yolov8n-face.pt)
   - Place the downloaded file inside the `server` directory.
+- Download the vosk small en us model for offline STT:
+  - [vosk-model-small-en-us-0.15](https://alphacephei.com/vosk/models/vosk-model-small-en-us-0.15.zip)
+  - Place the extracted folder from downloaded zip inside the `server` directory and make sure the folder name is `vosk-model-small-en-us-0.15`
 - Python **3.7 to 3.10** is required (due to MediaPipe compatibility).
 - Use Edge Browser
 - Open Edge and goto `edge://settings/privacy/sitePermissions/allPermissions/mediaAutoplay`. Add Site `http://localhost:5173` and set `Control if audio and video play automatically on sites` to `Allow`
@@ -32,6 +35,17 @@
    ```bash
     pip install -r requirements.txt
    ```
+5. All dependencies
+   * `mediapipe`
+   * `fastapi`
+   * `opencv-python`
+   * `ultralytics`
+   * `websocket-client`
+   * `omegaconf`
+   * `pyaudio`
+   * `dotenv`
+   * `vosk`
+   * `uvicorn`
 
 ## 🚀 How to Use
 1. Use Get State API in postman and make sure the websocket connected

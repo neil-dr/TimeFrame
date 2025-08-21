@@ -28,9 +28,9 @@ export default function Main() {
       i++;
       if (i >= words.length) {
         clearInterval(id);
-        setTimeout(() => {
-          setTranscription(null); // ✅ clear after last word delay
-        }, 500); // optional delay before clearing (tweakable)
+        //   setTimeout(() => {
+        //     setTranscription(null); // ✅ clear after last word delay
+        //   }, 500); // optional delay before clearing (tweakable)
       }
 
     }, 300);
@@ -58,14 +58,33 @@ export default function Main() {
         } else {
           pendingTextsRef.current.push(socketResponse.data!);
         }
+
         setTranscription(null)
       } else if (socketResponse.event == "stop-video-connection") {
         console.log('stop-video-connection')
         destroy()
+      } else if (socketResponse.event == "start-offline-speaking") {
+        // show offline video - (/offline-fallback.mp4)
+        // first fade in the top video using opacity
+        // when video end fade it out
+        const videoElement = remoteRef.current!
+        videoElement.src = 'offline-fallback.mp4'
+        videoElement.play()
+        videoElement.addEventListener("play", () => {
+          const message = JSON.stringify({ event: "speaking" });
+          ws.send(message)
+          videoElement.style.opacity = '1'
+          setMode("speaking")
+          speakingText.current = socketResponse.data!
+          onStartSpeaking()
+        })
+        videoElement.addEventListener("ended", () => {
+          videoElement.style.opacity = '0'
+          const message = JSON.stringify({ event: "back-to-listening" });
+          ws.send(message)
+          setMode("listening")
+        })
       } else { // modes
-        if (socketResponse.event == "listening" && speakingText.current != "") {
-          setTranscription(null)
-        }
         setMode(socketResponse.event);
       }
     };
@@ -89,10 +108,16 @@ export default function Main() {
   }, []);
 
   useEffect(() => {
-    if (!connected && mode != "idle") {
+    if (navigator.onLine && !connected && mode != "idle") {
       connect()
     }
-  }, [connected])
+  }, [connected, mode])
+
+  useEffect(() => {
+    if (mode == "listening" && speakingText.current != "") {
+      setTranscription(null)
+    }
+  }, [mode])
 
   useEffect(() => {
     if (!connected) return;
@@ -114,8 +139,8 @@ export default function Main() {
         {/* idle layer */}
         <video
           ref={idleRef}
-          // src={'./idle-square.mp4'}
-          src={'./idle-portrait.mp4'}
+          // src={'./idle-portrait.mp4'}
+          src={'./lincoln-1.mp4'}
           loop
           muted
           autoPlay
