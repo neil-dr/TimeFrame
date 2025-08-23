@@ -1,6 +1,10 @@
 venv
+.venv
 *.pt
 __pycache__/
 *.pyc
 .env
 vosk-model-small-en-us-0.15
+yolov8n-face.pt
+.python-version
+.DS_Store
