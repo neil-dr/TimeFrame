@@ -4,7 +4,7 @@ import asyncio
 import uvicorn
 from presence_detection.index import detection_loop
 from stt.index import start_stt
-from utils.camera_manager import open_camera, close_camera
+from utils.camera_manager import open_camera, close_camera, capture_frames
 from utils.mic_manager import close_mic
 from utils.websocket_manager import manager
 from utils.state_manager import get_mode
@@ -29,7 +29,6 @@ app = FastAPI(lifespan=lifespan)
 
 
 def core_loop():
-    open_camera()
     try:
         while not stop_event.is_set():
             detection_loop(stop_event)
@@ -46,6 +45,11 @@ def start_loop():
             detail="No WebSocket client connected",
         )
     global core_thread
+
+    # warm up camera
+    open_camera()
+    capture_frames()
+
     with thread_lock:
         if core_thread and core_thread.is_alive():
             raise HTTPException(status_code=400, detail="Loop already running")

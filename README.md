@@ -18,41 +18,102 @@
 ## 🚀 How to Run the Server
 
 1. Open a terminal in the `server` directory.
-2. Create a virtual environment (make sure Python 3.10 is used):
+
+2. Install Python 3.10
+   a. Download and install Python 3.10 on a fresh machine
+   b. On a machine with other Python version installed (MacOS):
+
+   - Install pyenv and build deps
+
    ```bash
-   python -m venv venv
+   brew update
+   brew install pyenv openssl readline sqlite3 xz zlib tcl-tk
    ```
-   or
+
+   - Initialize pyenv for bash
+
    ```bash
-   py -3.10 -m venv venv
+   echo 'eval "$(pyenv init -)"' >> ~/.bash_profile
+   source ~/.bash_profile
    ```
-   in case of multiple installed python versions
-3. Activate the virtual environment:
+
+   - Install Python 3.10 and set it for this project only (ensure you are in the `server` directory)
+
+   ```bash
+   pyenv install 3.10.14
+   pyenv local 3.10.14
+   ```
+
+3. Create a virtual environment (make sure Python 3.10 is used):
+   ```bash
+   python -m venv .venv
+   ```
+4. Activate the virtual environment:
+
+   - On MacOS
+
+   ```bash
+   source .venv/bin/activate
+   ```
+
+   - On Windows
+
    ```bash
    venv\Scripts\activate
    ```
-4. All dependencies
+
+5. If you are on Mac, you need to install PortAudio with Homebrew. This is a one time setup.
+   a. Install Xcode CLT (compiler)
+
    ```bash
-   pip install mediapipe fastapi opencv-python ultralytics websocket-client omegaconf pyaudio python-dotenv vosk uvicorn
+   xcode-select --install
    ```
 
-   * `mediapipe`
-   * `fastapi`
-   * `opencv-python`
-   * `ultralytics`
-   * `websocket-client`
-   * `omegaconf`
-   * `pyaudio`
-   * `dotenv`
-   * `vosk`
-   * `uvicorn`
+   b. Install PortAudio with Homebrew
+
+   - Apple Silicon (arm64):
+
+   ```bash
+   /opt/homebrew/bin/brew install portaudio
+   ```
+
+   - Intel Mac (x86_64) or Rosetta Homebrew:
+
+   ```bash
+   /usr/local/bin/brew install portaudio
+   ```
+
+   c. Install PyAudio inside your virtualenv
+
+   ```bash
+   pip install --no-cache-dir pyaudio
+   ```
+
+6. Install all dependencies
+
+   ```bash
+   pip install mediapipe fastapi opencv-python ultralytics websocket-client omegaconf pyaudio python-dotenv vosk uvicorn openai
+   ```
+
+   - `mediapipe`
+   - `openai`
+   - `fastapi`
+   - `opencv-python`
+   - `ultralytics`
+   - `websocket-client`
+   - `omegaconf`
+   - `pyaudio`
+   - `dotenv`
+   - `vosk`
+   - `uvicorn`
 
 ## 🚀 How to Use
+
 1. Use Get State API in postman and make sure the websocket connected
 2. Use Start loop api to start the core loop (On first start the presence detection take some time as the camera is taking permission to wait a while)
 3. Use stop loop api to stop the core loop
-5. Create `.env` in server folder refer `server/example.env`
-6. Start the FastAPI server:
+4. Create `.env` in server folder refer `server/example.env`
+5. Start the FastAPI server:
    ```bash
    python index.py
    ```

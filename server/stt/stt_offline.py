@@ -8,7 +8,7 @@ from vosk import Model, KaldiRecognizer
 from utils.websocket_manager import manager
 from presence_detection.detect_person import detect_person
 from config.stt import SILENCE_LIMIT
-from thinking.llm import think
+from thinking.index import think
 from utils.mic_manager import open_mic, close_mic
 
 

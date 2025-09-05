@@ -1,4 +1,5 @@
 export default function Text({ mode, transcription }: { mode: Modes, transcription: string | null }) {
+  console.log('transcription: ', transcription)
 
   const getContainerClasses = () => {
     const baseClasses = "bg-white/10 backdrop-blur-md rounded-xl px-4 py-2 border border-white/20 shadow-xl";

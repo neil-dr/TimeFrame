@@ -7,7 +7,7 @@ from presence_detection.detect_person import detect_person
 from utils.websocket_manager import manager
 import time
 from threading import Event
-from thinking.llm import think
+from thinking.index import think
 
 
 class STTService:
@@ -54,7 +54,6 @@ class STTService:
 
             try:
                 while self.connected and not self.stop_event.is_set():
-                    print('self.muted', self.muted)
                     # silence → presence logic
                     if not self.user_speak and (time.time() - self.stt_start_time > SILENCE_LIMIT):
                         if detect_person():
