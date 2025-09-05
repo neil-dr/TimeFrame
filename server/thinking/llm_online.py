@@ -6,13 +6,16 @@ load_dotenv()
 client = OpenAI()
 
 
-def think(query: str):
+def think(query: str, context: list):
     print("online thinking started")
     try:
         response = client.responses.create(
             model="gpt-4o",
             instructions=instructions,
-            input=query
+            input=[
+                *context,
+                {"role": "user", "content": query}
+            ]
         )
         return response.output[0].content[0].text
     except:

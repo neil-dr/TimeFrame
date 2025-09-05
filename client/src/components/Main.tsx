@@ -4,37 +4,18 @@ import useVideoProviderService from '../hooks/__useVideoProviderService';
 import ModeIcon from './ModeIcon';
 import FullscreenButton from './FullscreenButton';
 import Text from './Text';
+import useTextDisplay from '../hooks/useTextDisplay';
 
 export default function Main() {
   const [mode, setMode] = useState<Modes>("idle");
-  const [transcription, setTranscription] = useState<string | null>(null)
   const speakingText = useRef('')
   const idleRef = useRef<HTMLVideoElement>(null)
   const remoteRef = useRef<HTMLVideoElement>(null)
-
-  function onStartSpeaking() {
-    setTranscription(''); // reset output
-
-    if (speakingText.current.length === 0) return;
-    const words = speakingText.current.trim().split(/\s+/);
-
-    let i = 0;
-    let currentText = ''; // local accumulator
-
-    const id = setInterval(() => {
-      currentText += (currentText ? ' ' : '') + words[i];
-      if (currentText != '' && currentText != ' ')
-        setTranscription(currentText);
-      i++;
-      if (i >= words.length) {
-        clearInterval(id);
-        //   setTimeout(() => {
-        //     setTranscription(null); // ✅ clear after last word delay
-        //   }, 500); // optional delay before clearing (tweakable)
-      }
-
-    }, 300);
-  }
+  const {
+    transcription,
+    setTranscription,
+    onStartSpeaking
+  } = useTextDisplay(speakingText)
 
   const { connected, connect, sendText, destroy } = useVideoProviderService(idleRef, remoteRef, onStartSpeaking, setMode)
   const pendingTextsRef = useRef<string[]>([]);
