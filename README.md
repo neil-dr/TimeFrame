@@ -92,10 +92,11 @@
 6. Install all dependencies
 
    ```bash
-   pip install mediapipe fastapi opencv-python ultralytics websocket-client omegaconf pyaudio python-dotenv vosk uvicorn
+   pip install mediapipe fastapi opencv-python ultralytics websocket-client omegaconf pyaudio python-dotenv vosk uvicorn openai
    ```
 
    - `mediapipe`
+   - `openai`
    - `fastapi`
    - `opencv-python`
    - `ultralytics`
