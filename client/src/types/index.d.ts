@@ -31,3 +31,8 @@ interface SendMessageResponse {
   status: string;
   // …extend with whatever fields you read from the response
 }
+
+declare module "*.json" {
+  const value: Record<string, string>;
+  export default value;
+}
