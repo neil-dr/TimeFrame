@@ -10,7 +10,7 @@ from presence_detection.detect_person import detect_person
 from config.stt import SILENCE_LIMIT
 from thinking.index import think
 from utils.mic_manager import open_mic, close_mic
-
+from utils.logs_manager import LogManager
 
 class OfflineSTT:
     _instance = None
@@ -106,6 +106,8 @@ class OfflineSTT:
                         self.muted = True
                         print("Final:", result["text"])
                         print("Shifting to Thinking mode. Mic is now muted.")
+                        log = LogManager()
+                        log.insert_question(question=f"[OFFLINE]:{result['text']}")
                         think(result["text"])
                 else:
                     partial = json.loads(self.recognizer.PartialResult())

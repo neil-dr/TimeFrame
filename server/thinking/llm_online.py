@@ -1,5 +1,6 @@
 from openai import OpenAI
 from dotenv import load_dotenv
+from utils.logs_manager import LogManager
 
 load_dotenv()
 
@@ -17,7 +18,13 @@ def think(query: str, context: list):
                 {"role": "user", "content": query}
             ]
         )
-        return response.output[0].content[0].text
+
+        result = response.output[0].content[0].text
+
+        log = LogManager()
+        log.update_answer(
+            answer=f"[ONLINE]:{result}")
+        return result
     except:
         print("Failed to generate response from Online LLM.")
         return False

@@ -13,7 +13,7 @@ def think(input_txt):
         "role": "user",
         "content": input_txt
     })
-    if False and is_connected():
+    if is_connected():
         # LLM and Guardrail Layer
         output_txt = think_online(input_txt, chat)
         # output_txt = "Indeed, confidence in a court relies."

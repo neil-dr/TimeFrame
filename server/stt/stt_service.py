@@ -8,6 +8,7 @@ from utils.websocket_manager import manager
 import time
 from threading import Event
 from thinking.index import think
+from utils.logs_manager import LogManager
 
 
 class STTService:
@@ -90,6 +91,8 @@ class STTService:
                 print(data['transcript'])
                 self.muted = True
                 print("Shifting to Thinking mode. Mic is now muted.")
+                log = LogManager()
+                log.insert_question(question=f"[ONLINE]:{data['transcript']}")
                 think(data['transcript'])  # start thinking mode
             else:
                 # send data['transcript'] as in event
