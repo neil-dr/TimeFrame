@@ -66,6 +66,11 @@ class OfflineSTT:
         close_mic()
         print("Offline STT stopped")
 
+    def reset(self):
+        self.muted = False
+        self.user_speak = False
+        self.stt_start_time = time.time()
+    
     def _listen_loop(self):
         FORMAT = pyaudio.paInt16
         CHANNELS = 1

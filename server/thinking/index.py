@@ -1,6 +1,7 @@
 from utils.websocket_manager import manager
 from utils.internet import is_connected
 from thinking.llm_online import think as think_online
+from thinking.ll_offline import think as think_offline
 chat = []
 
 
@@ -12,7 +13,7 @@ def think(input_txt):
         "role": "user",
         "content": input_txt
     })
-    if is_connected():
+    if False and is_connected():
         # LLM and Guardrail Layer
         output_txt = think_online(input_txt, chat)
         # output_txt = "Indeed, confidence in a court relies."
@@ -22,10 +23,12 @@ def think(input_txt):
         })
         manager.broadcast(event="start-speaking",
                           data=output_txt)  # trigger speak mode
-    # else:
-    #     output_txt = """No internet connection detected, showing demo video instead now."""
-    #     manager.broadcast(event="start-offline-speaking",
-    #                       data=output_txt)  # trigger speak mode
+    else:
+        video_id = think_offline(input_txt, chat)
+        video_src = video_id + ".mp4"
+        # output_txt = """No internet connection detected, showing demo video instead now."""
+        manager.broadcast(event="start-offline-speaking",
+                          data=video_src)  # trigger speak mode
 
 
 def push_message(message: dict, max_messages: int = 10):

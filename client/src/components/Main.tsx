@@ -5,6 +5,7 @@ import ModeIcon from './ModeIcon';
 import FullscreenButton from './FullscreenButton';
 import Text from './Text';
 import useTextDisplay from '../hooks/useTextDisplay';
+import subtitles from '../subtitles.json';
 
 export default function Main() {
   const [mode, setMode] = useState<Modes>("idle");
@@ -49,17 +50,21 @@ export default function Main() {
         // first fade in the top video using opacity
         // when video end fade it out
         const videoElement = remoteRef.current!
-        videoElement.src = 'offline-fallback.mp4'
+        videoElement.srcObject = null
+        videoElement.src = socketResponse.data!
         videoElement.play()
         videoElement.addEventListener("play", () => {
+          console.log('play', socketResponse.data!)
           const message = JSON.stringify({ event: "speaking" });
           ws.send(message)
           videoElement.style.opacity = '1'
           setMode("speaking")
-          speakingText.current = socketResponse.data!
+          const text = subtitles["1"];
+          speakingText.current = text
           onStartSpeaking()
         })
         videoElement.addEventListener("ended", () => {
+          console.log('ended')
           videoElement.style.opacity = '0'
           const message = JSON.stringify({ event: "back-to-listening" });
           ws.send(message)
