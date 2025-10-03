@@ -8,13 +8,14 @@ from utils.camera_manager import open_camera, close_camera, capture_frames
 from utils.mic_manager import close_mic
 from utils.websocket_manager import manager
 from utils.state_manager import get_mode
+from utils.logs_manager import LogManager
 from contextlib import asynccontextmanager
 
 # — Thread & control event —
 core_thread: threading.Thread | None = None
 stop_event = threading.Event()
 thread_lock = threading.Lock()
-
+LogManager()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

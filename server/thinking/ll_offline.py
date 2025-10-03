@@ -1,7 +1,7 @@
 from openai import OpenAI
 from config.llm import LOCAL_LLM_MODEL
 client = OpenAI(base_url="http://localhost:1234/v1", api_key="lm-studio")
-
+from utils.logs_manager import LogManager
 
 def think(query: str, context: list):
   # query is user question
@@ -20,5 +20,10 @@ def think(query: str, context: list):
         temperature=1.0,
         max_tokens=5,
     )
+    # result = resp.choices[0].message.content
+    result = "1"
+    log = LogManager()
+    log.update_answer(
+            answer=f"[OFFLINE]:{result}")
     # return resp.choices[0].message.content
-    return "1" # TODO: when proper offline llm part is implemented than delete this line and uncomment the above line
+    return result # TODO: when proper offline llm part is implemented than delete this line and uncomment the above line

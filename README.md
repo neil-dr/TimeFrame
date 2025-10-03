@@ -92,7 +92,7 @@
 6. Install all dependencies
 
    ```bash
-   pip install mediapipe fastapi opencv-python ultralytics websocket-client omegaconf pyaudio python-dotenv vosk uvicorn openai
+   pip install mediapipe fastapi opencv-python ultralytics websocket-client omegaconf pyaudio python-dotenv vosk uvicorn openai mysql-connector-python
    ```
 
    - `mediapipe`
@@ -106,6 +106,14 @@
    - `dotenv`
    - `vosk`
    - `uvicorn`
+   - `mysql-connector-python`
+
+7. MYSQL Database Setup
+   Download mysql database server. than create `timeframe_logs` Schema on local db using mysql workbench. After that run 
+   ```
+   cd server
+   python run_migration.py
+   ```
 
 ## 🚀 How to Use
 
