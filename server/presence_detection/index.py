@@ -32,7 +32,5 @@ def detection_loop(stop_event: Event):
 
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
-    except:
-        pass
     finally:
         cv2.destroyAllWindows()

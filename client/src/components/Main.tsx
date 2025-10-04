@@ -70,6 +70,8 @@ export default function Main() {
           ws.send(message)
           setMode("listening")
         })
+      } else if (socketResponse.event == "error") {
+        setMode("error")
       } else { // modes
         setMode(socketResponse.event);
       }

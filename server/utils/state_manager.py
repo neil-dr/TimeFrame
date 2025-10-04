@@ -1,5 +1,5 @@
-all_modes = ["idle", "listening", "thinking", "speaking"]
-mode: str = "idle"  # "idle" | "listening" | "thinking" | "speaking"
+all_modes = ["idle", "listening", "thinking", "speaking", "error"]
+mode: str = "idle"  # "idle" | "listening" | "thinking" | "speaking" | "error"
 
 
 def set_mode(_mode: str):
