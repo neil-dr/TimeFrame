@@ -30,7 +30,7 @@ class STTService:
         self.ws_app = None
         self.connected = True
         self.audio_thread = None
-        self._audio_exception: Exception | None = None
+        self.exception: Exception | None = None
         self.stt_start_time = None
         self.muted = False
         self.stop_event: Event | None = None
@@ -73,8 +73,8 @@ class STTService:
                 print(
                     f"audio streaming stop {self.connected} {not self.stop_event.is_set()}")
             except Exception as e:
-                self._audio_exception = e
-                print(f"audio exception: {self._audio_exception}")
+                self.exception = e
+                print(f"audio exception: {self.exception}")
                 self.stop()
             finally:
                 close_mic()
@@ -84,24 +84,29 @@ class STTService:
         self.audio_thread.start()
 
     def on_message(self, ws, message):
-        data = json.loads(message)
-        if 'transcript' in data:
-            self.user_speak = True
-            if data.get('end_of_turn', False):
-                print(data['transcript'])
-                self.muted = True
-                print("Shifting to Thinking mode. Mic is now muted.")
-                log = LogManager()
-                log.insert_question(question=f"[ONLINE]:{data['transcript']}")
-                think(data['transcript'])  # start thinking mode
-            else:
-                # send data['transcript'] as in event
-                manager.broadcast(event="stt-transcription",
-                                  data=data['transcript'])
+        try:
+            data = json.loads(message)
+            if 'transcript' in data:
+                self.user_speak = True
+                if data.get('end_of_turn', False):
+                    print(data['transcript'])
+                    self.muted = True
+                    print("Shifting to Thinking mode. Mic is now muted.")
+                    log = LogManager()
+                    log.insert_question(
+                        question=f"[ONLINE]:{data['transcript']}")
+                    think(data['transcript'])  # start thinking mode
+                else:
+                    # send data['transcript'] as in event
+                    manager.broadcast(event="stt-transcription",
+                                      data=data['transcript'])
+        except Exception as e:
+            self.exception = e
+            self.stop()
 
     def on_error(self, ws, error):
-        print(f"Error from AAI {error}")
-        self._audio_exception = error
+        print(error)
+        self.exception = error
 
     def on_close(self, ws, code, reason):
         self.connected = False
@@ -126,8 +131,9 @@ class STTService:
         self.stop()
         if self.audio_thread:
             self.audio_thread.join()
-        if self._audio_exception:
-            raise self._audio_exception
+        if self.exception:
+            self.stop()
+            raise self.exception
 
     def stop(self):
         self.connected = False

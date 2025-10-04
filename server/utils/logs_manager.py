@@ -33,7 +33,12 @@ class LogManager(metaclass=SingletonMeta):
         INSERT INTO logs (event, question, question_timestamp)
         VALUES (%s, %s, %s)
         """
-        values = ("question", question, datetime.now())
+        values = ("question", question, # `datetime.now()` is a method from the `datetime` module in
+        # Python that returns the current date and time as a
+        # `datetime` object. It does not require any arguments and
+        # will return the current date and time at the moment it is
+        # called.
+        datetime.now())
         self.cursor.execute(query, values)
         self.conn.commit()
         self.current_question_log_id = self.cursor.lastrowid
@@ -41,10 +46,10 @@ class LogManager(metaclass=SingletonMeta):
 
     def insert_error(self, error_message: str) -> int:
         query = """
-        INSERT INTO logs (event, error_message)
-        VALUES (%s, %s)
+        INSERT INTO logs (event, error_message, error_timestamp)
+        VALUES (%s, %s, %s)
         """
-        values = ("error", error_message)
+        values = ("error", error_message, datetime.now())
         self.cursor.execute(query, values)
         self.conn.commit()
         return self.cursor.lastrowid

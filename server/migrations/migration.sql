@@ -5,5 +5,6 @@ CREATE TABLE IF NOT EXISTS logs (
   answer TEXT NULL,
   question_timestamp DATETIME NULL,
   answer_timestamp DATETIME NULL,
+  error_timestamp DATETIME NULL,
   error_message TEXT NULL
 );

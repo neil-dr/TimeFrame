@@ -9,25 +9,21 @@ client = OpenAI()
 
 def think(query: str, context: list):
     print("online thinking started")
-    try:
-        response = client.responses.create(
-            model="gpt-4o",
-            instructions=instructions,
-            input=[
-                *context,
-                {"role": "user", "content": query}
-            ]
-        )
+    response = client.responses.create(
+        model="gpt-4o",
+        instructions=instructions,
+        input=[
+            *context,
+            {"role": "user", "content": query}
+        ]
+    )
 
-        result = response.output[0].content[0].text
+    result = response.output[0].content[0].text
 
-        log = LogManager()
-        log.update_answer(
-            answer=f"[ONLINE]:{result}")
-        return result
-    except:
-        print("Failed to generate response from Online LLM.")
-        return False
+    log = LogManager()
+    log.update_answer(
+        answer=f"[ONLINE]:{result}")
+    return result
 
 
 instructions = """

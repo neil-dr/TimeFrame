@@ -7,7 +7,7 @@ from stt.index import start_stt
 from utils.camera_manager import open_camera, close_camera, capture_frames
 from utils.mic_manager import close_mic
 from utils.websocket_manager import manager
-from utils.state_manager import get_mode
+from utils.state_manager import get_mode, set_mode
 from utils.logs_manager import LogManager
 from contextlib import asynccontextmanager
 
@@ -15,7 +15,7 @@ from contextlib import asynccontextmanager
 core_thread: threading.Thread | None = None
 stop_event = threading.Event()
 thread_lock = threading.Lock()
-LogManager()
+log = LogManager()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -34,7 +34,13 @@ def core_loop():
         while not stop_event.is_set():
             detection_loop(stop_event)
             start_stt(stop_event=stop_event, start_video_connection=True)
+    except Exception as e:
+        print("Main Exception")
+        manager.broadcast("error")
+        set_mode("error")
+        log.insert_error(error_message=str(e))
     finally:
+        stop_event.set()
         close_camera()
 
 

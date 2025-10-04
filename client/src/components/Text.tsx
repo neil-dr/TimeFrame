@@ -36,7 +36,8 @@ export default function Text({ mode, transcription }: { mode: Modes, transcripti
         {mode == "idle" ? 'Ask me a question' :
           mode == "listening" ? (transcription || "I'm listening....") :
             mode == "thinking" ? "I'm thinking...." :
-              mode == "speaking" ? (transcription) : "Ask me a question"}
+              mode == "speaking" ? (transcription) :
+              mode == "error" ? "Lincoln is away" : "Ask me a question"}
       </p>
     </div>
   )

@@ -12,6 +12,7 @@ from thinking.index import think
 from utils.mic_manager import open_mic, close_mic
 from utils.logs_manager import LogManager
 
+
 class OfflineSTT:
     _instance = None
     _initialized = False
@@ -25,6 +26,7 @@ class OfflineSTT:
         if OfflineSTT._initialized:
             return
         OfflineSTT._initialized = True
+        self._audio_exception: Exception | None = None
 
         self.model_path = "vosk-model-small-en-us-0.15"
         if not os.path.exists(self.model_path):
@@ -65,12 +67,15 @@ class OfflineSTT:
 
         close_mic()
         print("Offline STT stopped")
+        if self._audio_exception:
+            raise self._audio_exception
 
     def reset(self):
         self.muted = False
         self.user_speak = False
         self.stt_start_time = time.time()
-    
+        self._audio_exception = None
+
     def _listen_loop(self):
         FORMAT = pyaudio.paInt16
         CHANNELS = 1
@@ -107,7 +112,8 @@ class OfflineSTT:
                         print("Final:", result["text"])
                         print("Shifting to Thinking mode. Mic is now muted.")
                         log = LogManager()
-                        log.insert_question(question=f"[OFFLINE]:{result['text']}")
+                        log.insert_question(
+                            question=f"[OFFLINE]:{result['text']}")
                         think(result["text"])
                 else:
                     partial = json.loads(self.recognizer.PartialResult())
@@ -117,8 +123,10 @@ class OfflineSTT:
                             event="stt-transcription", data=partial["partial"])
 
         except Exception as e:
+            self._audio_exception = e
             print(f"Offline STT Error: {e}")
         finally:
-            stream.stop_stream()
+            if stream.is_active() or not stream.is_stopped():
+                stream.stop_stream()
             stream.close()
             audio.terminate()
