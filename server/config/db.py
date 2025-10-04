@@ -1,4 +1,4 @@
 HOST='localhost'
 USERNAME='root'
-PASSWORD='root'
+PASSWORD='zedstack'
 DB='timeframe_logs'

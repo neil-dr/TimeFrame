@@ -27,7 +27,7 @@
 
    ```bash
    brew update
-   brew install pyenv openssl readline sqlite3 xz zlib tcl-tk
+   brew install pyenv
    ```
 
    - Initialize pyenv for bash
@@ -53,6 +53,7 @@
    - On MacOS
 
    ```bash
+   chmod +x .venv/bin/activate
    source .venv/bin/activate
    ```
 
@@ -63,37 +64,16 @@
    ```
 
 5. If you are on Mac, you need to install PortAudio with Homebrew. This is a one time setup.
-   a. Install Xcode CLT (compiler)
-
    ```bash
-   xcode-select --install
-   ```
-
-   b. Install PortAudio with Homebrew
-
-   - Apple Silicon (arm64):
-
-   ```bash
-   /opt/homebrew/bin/brew install portaudio
-   ```
-
-   - Intel Mac (x86_64) or Rosetta Homebrew:
-
-   ```bash
-   /usr/local/bin/brew install portaudio
-   ```
-
-   c. Install PyAudio inside your virtualenv
-
-   ```bash
-   pip install --no-cache-dir pyaudio
-   ```
+   brew install portaudio
 
 6. Install all dependencies
 
    ```bash
    pip install mediapipe fastapi opencv-python ultralytics websocket-client omegaconf pyaudio python-dotenv vosk uvicorn openai mysql-connector-python
    ```
+
+   If above command fails download dependencies one by one
 
    - `mediapipe`
    - `openai`
@@ -109,7 +89,7 @@
    - `mysql-connector-python`
 
 7. MYSQL Database Setup
-   Download mysql database server. than create `timeframe_logs` Schema on local db using mysql workbench. After that run 
+   Download mysql database server. Update the password and user of local mysql server here `server/config/db.py`. Than create `timeframe_logs` Schema on local db using mysql workbench. After that run 
    ```
    cd server
    python run_migration.py
