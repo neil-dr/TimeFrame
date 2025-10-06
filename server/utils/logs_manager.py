@@ -1,10 +1,8 @@
-import mysql.connector
+import sqlite3
 from datetime import datetime
-from config.db import *
+from pathlib import Path
 
 # Singleton Metaclass
-
-
 class SingletonMeta(type):
     _instances = {}
 
@@ -15,31 +13,37 @@ class SingletonMeta(type):
         return cls._instances[cls]
 
 
-# LogManager Singleton
+# LogManager Singleton using SQLite
 class LogManager(metaclass=SingletonMeta):
-    def __init__(self):
-        self.conn = mysql.connector.connect(
-            host=HOST,
-            user=USERNAME,
-            password=PASSWORD,
-            database=DB,
-            port=PORT
-        )
-        print("Connected to MYSQL DB")
+    def __init__(self, db_path: str = "timeframe_logs.db"):
+        """Initialize SQLite connection and ensure logs table exists."""
+        db_file = Path(db_path)
+        self.conn = sqlite3.connect(db_file)
         self.cursor = self.conn.cursor()
+        print(f"Connected to SQLite DB at {db_file.resolve()}")
         self.current_question_log_id = None
+
+        # Create table if it doesn't exist
+        self.cursor.execute("""
+        CREATE TABLE IF NOT EXISTS logs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            event TEXT,
+            question TEXT,
+            question_timestamp TEXT,
+            answer TEXT,
+            answer_timestamp TEXT,
+            error_message TEXT,
+            error_timestamp TEXT
+        )
+        """)
+        self.conn.commit()
 
     def insert_question(self, question: str) -> int:
         query = """
         INSERT INTO logs (event, question, question_timestamp)
-        VALUES (%s, %s, %s)
+        VALUES (?, ?, ?)
         """
-        values = ("question", question, # `datetime.now()` is a method from the `datetime` module in
-        # Python that returns the current date and time as a
-        # `datetime` object. It does not require any arguments and
-        # will return the current date and time at the moment it is
-        # called.
-        datetime.now())
+        values = ("question", question, datetime.now().isoformat())
         self.cursor.execute(query, values)
         self.conn.commit()
         self.current_question_log_id = self.cursor.lastrowid
@@ -48,9 +52,9 @@ class LogManager(metaclass=SingletonMeta):
     def insert_error(self, error_message: str) -> int:
         query = """
         INSERT INTO logs (event, error_message, error_timestamp)
-        VALUES (%s, %s, %s)
+        VALUES (?, ?, ?)
         """
-        values = ("error", error_message, datetime.now())
+        values = ("error", error_message, datetime.now().isoformat())
         self.cursor.execute(query, values)
         self.conn.commit()
         return self.cursor.lastrowid
@@ -61,11 +65,11 @@ class LogManager(metaclass=SingletonMeta):
 
         query = """
         UPDATE logs
-        SET answer = %s,
-            answer_timestamp = %s
-        WHERE id = %s
+        SET answer = ?,
+            answer_timestamp = ?
+        WHERE id = ?
         """
-        values = (answer, datetime.now(), self.current_question_log_id)
+        values = (answer, datetime.now().isoformat(), self.current_question_log_id)
         self.cursor.execute(query, values)
         self.conn.commit()
 
