@@ -1,107 +1,119 @@
-# 🕒 Timeframe
+# 🧠 Timeframe – Full Stack Setup (Docker + LM Studio)
+---
 
-## 📋 Prerequisites
+## 📦 What’s Included
 
-- Download the YOLOv8n face detection model:
-  [yolov8n-face.pt](https://github.com/akanametov/yolo-face/releases/download/v0.0.0/yolov8n-face.pt)
-  - Place the downloaded file inside the `server` directory.
-- Download the vosk small en us model for offline STT:
-  - [vosk-model-small-en-us-0.15](https://alphacephei.com/vosk/models/vosk-model-small-en-us-0.15.zip)
-  - Place the extracted folder from downloaded zip inside the `server` directory and make sure the folder name is `vosk-model-small-en-us-0.15`
-- Python **3.7 to 3.10** is required (due to MediaPipe compatibility).
-- Use Edge Browser
-- Open Edge and goto `edge://settings/privacy/sitePermissions/allPermissions/mediaAutoplay`. Add Site `http://localhost:5173` and set `Control if audio and video play automatically on sites` to `Allow`
-- Import [Timeframe.postman_collection.json](https://github.com/neil-dr/TimeFrame/blob/main/Timeframe.postman_collection.json) in postman
+| Service | Description | Port |
+|----------|--------------|------|
+| 🧩 Backend | FastAPI (Python 3.10) server with YOLO + Vosk | 8000 |
+| 💾 Database | MySQL 8.0 | 3306 |
+| 💻 Frontend | React + Vite | 5173 |
+| 🧠 LM Studio | Local AI inference server | 1234 |
 
 ---
 
-## 🚀 How to Run the Server
+## 🧰 Prerequisites
 
-1. Open a terminal in the `server` directory.
+Before running Docker Compose, ensure you have:
 
-2. Install Python 3.10
-   a. Download and install Python 3.10 on a fresh machine
-   b. On a machine with other Python version installed (MacOS):
+1. **Docker Desktop** installed  
+   👉 [https://www.docker.com/products/docker-desktop](https://www.docker.com/products/docker-desktop)
 
-   - Install pyenv and build deps
+2. **LM Studio** (optional, for local LLM inference)  
+   👉 [https://lmstudio.ai](https://lmstudio.ai)
 
+## ⚙️ Setting Up LM Studio
+
+If you want to use **local LLM inference**:
+
+1. **Install LM Studio** from [https://lmstudio.ai](https://lmstudio.ai)
+2. **Open LM Studio**
+   - Go to the **Server** tab
+   - Click **Start Local Server**
+3. Note the API URL (usually):
+   ```
+   http://localhost:1234/v1
+   ```
+4. Add `.env` file to server
+Copy `example.env` and rename to `.env` inside `server/`. Than replace values of variables with valid corresponding values
+---
+
+## 🚀 Run with Docker Compose
+
+Once Docker and LM Studio are ready:
+
+1. Open a terminal in the **project root**.
+2. Build and start all services:
    ```bash
-   brew update
-   brew install pyenv
+   docker compose up --build
    ```
+3. Wait for setup — the backend will download the required models automatically.
 
-   - Initialize pyenv for bash
+Once running:
 
-   ```bash
-   echo 'eval "$(pyenv init -)"' >> ~/.bash_profile
-   source ~/.bash_profile
-   ```
+| Service | URL |
+|----------|-----|
+| Frontend | http://localhost:5173 |
+| Backend API Docs | http://localhost:8000/docs |
+| MySQL DB | localhost:3306 |
+| LM Studio (optional) | http://localhost:1234/v1 |
 
-   - Install Python 3.10 and set it for this project only (ensure you are in the `server` directory)
+---
 
-   ```bash
-   pyenv install 3.10.14
-   pyenv local 3.10.14
-   ```
+## 🧪 Testing
 
-3. Create a virtual environment (make sure Python 3.10 is used):
-   ```bash
-   python -m venv .venv
-   ```
-4. Activate the virtual environment:
+1. Open **Postman** or browser:
+   - Visit: [http://localhost:8000/docs](http://localhost:8000/docs)
+2. Test endpoints:
+   - `GET /get_state`
+   - `POST /start_loop`
+   - `POST /stop_loop`
+3. Ensure webcam/microphone permissions are granted in Edge (see `client/README.md`).
 
-   - On MacOS
+---
 
-   ```bash
-   chmod +x .venv/bin/activate
-   source .venv/bin/activate
-   ```
+## 🧱 Project Structure
 
-   - On Windows
+```
+Timeframe/
+├── client/               # React frontend
+│   └── README.md
+├── server/               # FastAPI backend
+│   └── README.md
+├── docker-compose.yml    # Defines frontend, backend, db services
+└── README.md             # (This file)
+```
 
-   ```bash
-   venv\Scripts\activate
-   ```
+---
 
-5. If you are on Mac, you need to install PortAudio with Homebrew. This is a one time setup.
-   ```bash
-   brew install portaudio
+## 🧹 Stopping and Cleaning Up
 
-6. Install all dependencies
+To stop all services:
+```bash
+docker compose down
+```
 
-   ```bash
-   pip install mediapipe fastapi opencv-python ultralytics websocket-client omegaconf pyaudio python-dotenv vosk uvicorn openai mysql-connector-python
-   ```
+To rebuild fresh:
+```bash
+docker compose build --no-cache
+docker compose up
+```
 
-   If above command fails download dependencies one by one
+---
 
-   - `mediapipe`
-   - `openai`
-   - `fastapi`
-   - `opencv-python`
-   - `ultralytics`
-   - `websocket-client`
-   - `omegaconf`
-   - `pyaudio`
-   - `dotenv`
-   - `vosk`
-   - `uvicorn`
-   - `mysql-connector-python`
+## ✅ Summary
 
-7. MYSQL Database Setup
-   Download mysql database server. Update the password and user of local mysql server here `server/config/db.py`. Than create `timeframe_logs` Schema on local db using mysql workbench. After that run 
-   ```
-   cd server
-   python run_migration.py
-   ```
+✅ One command to run everything:  
+```bash
+docker compose up --build
+```
 
-## 🚀 How to Use
+✅ Optional LM Studio integration for local LLMs  
+✅ Fully containerized frontend, backend, and database  
+✅ Uses YOLOv8 + Vosk for vision and speech processing  
 
-1. Use Get State API in postman and make sure the websocket connected
-2. Use Start loop api to start the core loop (On first start the presence detection take some time as the camera is taking permission to wait a while)
-3. Use stop loop api to stop the core loop
-4. Create `.env` in server folder refer `server/example.env`
-5. Start the FastAPI server:
-   ```bash
-   python index.py
-   ```
+---
+
+**Author:** Your Team  
+**Version:** 1.0  
+**License:** MIT  

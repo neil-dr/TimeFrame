@@ -1,5 +1,5 @@
 import { useRef, type RefObject } from 'react';
-import { getSocket } from '../apis/socket';
+import { socket } from '../apis/socket';
 
 /**
  * useDIDAgentStream – React hook for manual‑mode D‑ID Agents
@@ -66,7 +66,7 @@ export default function useDIDAgentStream(idleRef: RefObject<HTMLVideoElement | 
         fadeOut();
 
         // notify backend to get back to listening
-        const ws = getSocket();
+        const ws = socket;
 
         const message = JSON.stringify({ event: "back-to-listening" });
         ws.send(message)

@@ -22,7 +22,8 @@ class LogManager(metaclass=SingletonMeta):
             host=HOST,
             user=USERNAME,
             password=PASSWORD,
-            database=DB
+            database=DB,
+            port=PORT
         )
         print("Connected to MYSQL DB")
         self.cursor = self.conn.cursor()

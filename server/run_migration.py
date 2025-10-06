@@ -11,6 +11,7 @@ def run_migration():
         host=HOST,
         user=USERNAME,
         password=PASSWORD
+        port=PORT
     )
 
     cursor = conn.cursor()
