@@ -1,4 +1,6 @@
-CREATE TABLE IF NOT EXISTS logs (
+CREATE SCHEMA IF NOT EXISTS timeframe_logs;
+
+CREATE TABLE IF NOT EXISTS timeframe_logs.logs (
   id INT AUTO_INCREMENT PRIMARY KEY,
   event ENUM('question', 'error') NOT NULL,
   question TEXT NULL,
