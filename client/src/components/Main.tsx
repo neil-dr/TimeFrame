@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { socket } from '../apis/socket';
-import useVideoProviderService from '../hooks/__useVideoProviderService';
+import useVideoProviderService from '../hooks/useVideoProviderService';
 import ModeIcon from './ModeIcon';
 import FullscreenButton from './FullscreenButton';
 import Text from './Text';

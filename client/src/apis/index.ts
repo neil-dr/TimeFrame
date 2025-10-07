@@ -1,5 +1,6 @@
 import axios from "axios"
-axios.defaults.baseURL = "http://127.0.0.1:8000"
+import { API_BASE_URL } from "../config"
+axios.defaults.baseURL = API_BASE_URL
 
 
 export async function startCoreLoopApiCall() {
