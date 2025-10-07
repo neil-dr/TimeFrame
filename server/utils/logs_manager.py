@@ -35,12 +35,9 @@ class LogManager:
             conn.commit()
 
     def insert_error(self, error_message, timestamp=None):
-        print(1)
         if timestamp is None:
             timestamp = datetime.now().isoformat()
-        print(2)
         with self._get_connection() as conn:
-            print(3)
             cursor = conn.cursor()
             cursor.execute(
                 "INSERT INTO logs (type, message, created_at) VALUES (?, ?, ?)",
