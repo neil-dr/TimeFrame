@@ -128,7 +128,7 @@ export default function Main() {
         <video
           ref={idleRef}
           // src={'./idle-portrait.mp4'}
-          src={'./lincoln-1.mp4'}
+          src={'./lincoln-3.mp4'}
           loop
           muted
           autoPlay

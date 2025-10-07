@@ -15,7 +15,7 @@ import { socket } from '../apis/socket';
 // Lincoln 1 ID: v2_agt_53wdAW15
 // Lincoln 2 ID: v2_agt_WT3Wug2m
 // Lincoln 3 ID: v2_agt_YiDY_feh
-const AGENT_ID = 'v2_agt_53wdAW15';
+const AGENT_ID = 'v2_agt_YiDY_feh';
 const DID = {
   API_KEY_B64: 'YXBpZXRlcm5hbGxlZ2FjeUBnbWFpbC5jb20:6q7jdn1OpcAYrzVyIXrIA', // ELAI 
   // API_KEY_B64: 'dmlwaXBvMjM3NkBmdXJzZWUuY29t:F_8nJytQuSHf8PhZoFjz_', // Test
