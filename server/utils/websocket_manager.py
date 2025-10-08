@@ -37,8 +37,9 @@ class ConnectionManager:
                         nparr = np.frombuffer(data, np.uint8)
                         frame = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
                         set_latest_frame(frame)
-                    else:
-                        payload = json.loads(raw)
+                    
+                    if "text" in raw and raw["text"] is not None:
+                        payload = json.loads(raw["text"])
                         event, data = payload.get("event"), payload.get("data")
                         if self.connected and not stop_event.is_set():
 

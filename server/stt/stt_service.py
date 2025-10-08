@@ -69,7 +69,6 @@ class STTService:
                         continue
 
                     chunk = listen_to_audio()
-                    print(f'chunk')
                     ws.send(chunk, websocket.ABNF.OPCODE_BINARY)
                 print(
                     f"audio streaming stop {self.connected} {not self.stop_event.is_set()}")
@@ -87,11 +86,12 @@ class STTService:
     def on_message(self, ws, message):
         try:
             data = json.loads(message)
-            print(data)
             if 'transcript' in data:
                 self.user_speak = True
                 if data.get('end_of_turn', False):
                     print(data['transcript'])
+                    manager.broadcast(event="stt-transcription",
+                                      data=data['transcript'])
                     self.muted = True
                     print("Shifting to Thinking mode. Mic is now muted.")
                     log = LogManager()

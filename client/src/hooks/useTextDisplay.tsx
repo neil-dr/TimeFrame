@@ -68,7 +68,9 @@ export default function useTextDisplay(speakingText: React.RefObject<string>) {
 
     // start a new reveal pass
     const text = speakingText.current || '';
-    revealSpokenText(text).catch(console.error);
+    revealSpokenText(text)
+    .then(()=>setTranscription(null))
+    .catch(console.error);
   }
 
 

@@ -19,7 +19,7 @@ export default function Main() {
     onStartSpeaking
   } = useTextDisplay(speakingText)
 
-  const { connected, connect, sendText, destroy } = useVideoProviderService(idleRef, remoteRef, onStartSpeaking, setMode)
+  const { connected, connect, sendText, destroy } = useVideoProviderService(idleRef, remoteRef, onStartSpeaking, setMode, transcription)
   const pendingTextsRef = useRef<string[]>([]);
   useCameraSender();
 
@@ -105,7 +105,7 @@ export default function Main() {
 
   useEffect(() => {
     if (mode == "listening" && speakingText.current != "") {
-      setTranscription(null)
+        setTranscription(null)
     }
   }, [mode])
 
