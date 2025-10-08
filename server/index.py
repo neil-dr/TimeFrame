@@ -35,7 +35,7 @@ def core_loop():
             detection_loop(stop_event)
             start_stt(stop_event=stop_event, start_video_connection=True)
     except Exception as e:
-        print("Main Exception")
+        print("Main Exception", e)
         manager.broadcast("error")
         set_mode("error")
         log.insert_error(error_message=str(e))

@@ -21,4 +21,4 @@ def detect_person():
         if ret:
             return detect_faces(frame)
 
-        cv2.imshow("YOLO + MediaPipe Frontal Detection", frame)
+        # cv2.imshow("YOLO + MediaPipe Frontal Detection", frame)
