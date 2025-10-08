@@ -78,6 +78,10 @@ export default function Main() {
         })
       } else if (socketResponse.event == "error") {
         setMode("error")
+      } else if (socketResponse.event == "thinking") { // modes
+        setTimeout(() => {
+          setMode("thinking");
+        }, 1000)
       } else { // modes
         setMode(socketResponse.event);
       }

@@ -11,6 +11,7 @@ def think(query: str, context: list):
     print("online thinking started")
     response = client.responses.create(
         model="gpt-4o",
+        service_tier='priority',
         instructions=instructions,
         input=[
             *context,
