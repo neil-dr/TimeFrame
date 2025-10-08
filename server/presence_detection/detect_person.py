@@ -2,23 +2,13 @@ from utils.camera_manager import capture_frames
 from presence_detection.detect_frontal_face import detect_faces
 from config.presence_detection import MAX_CAM_FAILURES
 import cv2
+from utils.frame_buffer import get_latest_frame
 
 
 def detect_person():
     failures = 0
-    ret, frame = capture_frames()
+    frame = get_latest_frame()
     while True:
-        ret, frame = capture_frames()
-        if not ret:
-            if failures >= MAX_CAM_FAILURES:
-                raise IOError(
-                    "Could not open video capture device")
-            else:
-                failures = failures+1
-        else:
-            failures = 0
-
-        if ret:
+        frame = get_latest_frame()
+        if frame is not None and frame.size > 0:
             return detect_faces(frame)
-
-        # cv2.imshow("YOLO + MediaPipe Frontal Detection", frame)

@@ -6,6 +6,7 @@ import FullscreenButton from './FullscreenButton';
 import Text from './Text';
 import useTextDisplay from '../hooks/useTextDisplay';
 import subtitles from '../subtitles.json';
+import useCameraSender from '../hooks/useCameraSender';
 
 export default function Main() {
   const [mode, setMode] = useState<Modes>("idle");
@@ -20,6 +21,7 @@ export default function Main() {
 
   const { connected, connect, sendText, destroy } = useVideoProviderService(idleRef, remoteRef, onStartSpeaking, setMode)
   const pendingTextsRef = useRef<string[]>([]);
+  useCameraSender();
 
   useEffect(() => {
     const ws = socket;

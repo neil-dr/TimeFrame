@@ -41,7 +41,7 @@ def core_loop():
         log.insert_error(error_message=str(e))
     finally:
         stop_event.set()
-        close_camera()
+        # close_camera()
 
 
 @app.get("/start-loop")
@@ -54,8 +54,8 @@ def start_loop():
     global core_thread
 
     # warm up camera
-    open_camera()
-    capture_frames()
+    # open_camera()
+    # capture_frames()
 
     with thread_lock:
         if core_thread and core_thread.is_alive():

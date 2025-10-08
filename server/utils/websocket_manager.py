@@ -3,9 +3,10 @@ from utils.state_manager import set_mode
 import threading
 import asyncio
 import json
-import time
+import numpy as np
 from threading import Event
-
+import cv2
+from utils.frame_buffer import set_latest_frame
 
 class ConnectionManager:
     def __init__(self):
@@ -30,18 +31,24 @@ class ConnectionManager:
         try:
             while True:
                 try:
-                    raw = await websocket.receive_text()
-                    payload = json.loads(raw)
-                    event, data = payload.get("event"), payload.get("data")
-                    if self.connected and not stop_event.is_set():
+                    raw = await websocket.receive()
+                    if "bytes" in raw:
+                        data = raw["bytes"]
+                        nparr = np.frombuffer(data, np.uint8)
+                        frame = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+                        set_latest_frame(frame)
+                    else:
+                        payload = json.loads(raw)
+                        event, data = payload.get("event"), payload.get("data")
+                        if self.connected and not stop_event.is_set():
 
-                        if event == "back-to-listening":
-                            from stt.index import get_stt_instance
-                            stt = get_stt_instance()
-                            stt.reset()
-                            print("🔊  Mic un-muted, back to listening")
-                        elif event == "speaking":
-                            set_mode("speaking")
+                            if event == "back-to-listening":
+                                from stt.index import get_stt_instance
+                                stt = get_stt_instance()
+                                stt.reset()
+                                print("🔊  Mic un-muted, back to listening")
+                            elif event == "speaking":
+                                set_mode("speaking")
                 except (ValueError, KeyError):
                     print("bad payload")
 
