@@ -74,9 +74,9 @@ export default function useDIDAgentStream(idleRef: RefObject<HTMLVideoElement | 
         restartIdle()
         fadeOut();
 
-        while (!transcription){
-          // wait for transcription to be set
-        }
+        // while (!transcription){
+        //   // wait for transcription to be set
+        // }
 
         // notify backend to get back to listening
         const message = JSON.stringify({ event: "back-to-listening" });

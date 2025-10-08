@@ -15,10 +15,9 @@ def think(input_txt):
     })
     if is_connected():
         # LLM and Guardrail Layer
-        output_txt = "the books I could borrow and the stories I heard. The wilderness taught resilience. It was a humble"#think_online(input_txt, chat)
-        # output_txt = "Indeed, confidence in a court relies."
+        output_txt = think_online(input_txt, chat)
         push_message({
-            "role": "lincoln",
+            "role": "assistant",
             "content": output_txt
         })
         manager.broadcast(event="start-speaking",

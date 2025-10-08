@@ -50,6 +50,8 @@ class ConnectionManager:
                                 print("🔊  Mic un-muted, back to listening")
                             elif event == "speaking":
                                 set_mode("speaking")
+                            elif event == "error":
+                                set_mode("error")
                 except (ValueError, KeyError):
                     print("bad payload")
 

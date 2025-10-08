@@ -32,7 +32,11 @@ export default function Main() {
     const handleMsg = (event: MessageEvent<Modes>) => {
       const socketResponse: SocketResponse = JSON.parse(event.data)
       if (socketResponse.event === "start-video-connection") {
-        connect();
+        connect().catch(() => {
+          const message = JSON.stringify({ event: "error" });
+          socket.send(message)
+          setMode('error');
+        });
       } else if (socketResponse.event == "stt-transcription") {
         setTranscription(socketResponse.data!)
       } else if (socketResponse.event == "start-speaking") {
@@ -105,7 +109,7 @@ export default function Main() {
 
   useEffect(() => {
     if (mode == "listening" && speakingText.current != "") {
-        setTranscription(null)
+      setTranscription(null)
     }
   }, [mode])
 
