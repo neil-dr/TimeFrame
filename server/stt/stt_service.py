@@ -8,7 +8,9 @@ from utils.websocket_manager import manager
 import time
 from threading import Event
 from thinking.index import think
-from utils.logs_manager import LogManager
+from utils.logs_manager import LogManager, Log
+
+log = LogManager()
 
 
 class STTService:
@@ -62,6 +64,11 @@ class STTService:
                 self.eot_timer.cancel()
                 self.eot_timer = None
 
+            log.add_log(Log(
+                event="Reset STT triggered",
+                detail="N/A",
+            ))
+
     def on_open(self, ws):
         def stream_audio():
             open_mic()
@@ -103,7 +110,7 @@ class STTService:
         # Drop anything that arrives after the 2s cutoff (strongest guarantee)
         if self.eot_active and self.eot_deadline and time.time() >= self.eot_deadline:
             return
-        
+
         if not self.accepting:
             return  # ignore entirely after cutoff (fallback to the above)
 
@@ -128,16 +135,25 @@ class STTService:
                         self.muted = True
                         self.buffered_transcripts = [transcript]
 
+                        log.add_log(Log(
+                            event="First EOT received",
+                            detail=f"[PAYLOAD]:{message}",
+                        ))
+
                         print(
                             "🛑 First EOT detected — mic muted, waiting 2s for late chunks...")
                         print("🧾 Transcript:", transcript)
-                        
+
                         # Start 2s grace window
                         self.eot_timer = threading.Timer(
                             2.0, self._finalize_transcription)
                         self.eot_timer.start()
 
                     else:
+                        log.add_log(Log(
+                            event="Subsequent EOT received",
+                            detail=f"[PAYLOAD]:{message}",
+                        ))
                         # Subsequent EOTs within grace window
                         print(
                             "🕒 Additional EOT received within 2s window — appending text...")
@@ -186,12 +202,15 @@ class STTService:
             manager.broadcast(event="stop-video-connection")
 
     def _finalize_transcription(self):
+        global log
         with self.lock:
-            self.accepting = False # do not accept transcription after this point
+            self.accepting = False  # do not accept transcription after this point
             full_text = " ".join(self.buffered_transcripts).strip()
             print(f"🧠 Final combined transcript: {full_text}")
 
         # Log & Think
-        log = LogManager()
-        log.insert_question(question=f"[ONLINE]:{full_text}")
+        log.add_log(Log(
+            event="Transcription finalized",
+            detail=f"[ONLINE]:{full_text}",
+        ))
         think(full_text)

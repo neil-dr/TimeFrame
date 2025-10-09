@@ -60,7 +60,7 @@ export default function Main() {
         connect().catch(() => {
           const message = JSON.stringify({ event: "error" });
           socket.send(message)
-          setMode('error');
+          setMode('away');
         });
       } else if (socketResponse.event == "stt-transcription") {
         setTranscription(socketResponse.data!)
@@ -101,8 +101,8 @@ export default function Main() {
           ws.send(message)
           setMode("listening")
         })
-      } else if (socketResponse.event == "error") {
-        setMode("error")
+      } else if (socketResponse.event == "away") {
+        setMode("away")
       } else if (socketResponse.event == "thinking") { // modes
         setTimeout(() => {
           setMode("thinking");

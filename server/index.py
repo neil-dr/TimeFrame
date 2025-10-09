@@ -8,14 +8,16 @@ from stt.index import start_stt
 from utils.mic_manager import close_mic
 from utils.websocket_manager import manager
 from utils.state_manager import get_mode, set_mode
-from utils.logs_manager import LogManager
+from utils.logs_manager import LogManager, Log
 from contextlib import asynccontextmanager
+from datetime import datetime
 
 # — Thread & control event —
 core_thread: threading.Thread | None = None
 stop_event = threading.Event()
 thread_lock = threading.Lock()
 log = LogManager()
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -36,9 +38,13 @@ def core_loop():
             start_stt(stop_event=stop_event, start_video_connection=True)
     except Exception as e:
         print("Main Exception", e)
-        manager.broadcast("error")
-        set_mode("error")
-        log.insert_error(error_message=str(e))
+        manager.broadcast("away")
+        set_mode("away")
+        log.add_log(Log(
+            event="Main Exception",
+            detail=str(e),
+            type="error"
+        ))
     finally:
         stop_event.set()
         # close_camera()
@@ -61,6 +67,13 @@ def start_loop():
         if core_thread and core_thread.is_alive():
             raise HTTPException(status_code=400, detail="Loop already running")
         stop_event.clear()
+        log.start_new_instance()
+
+        log.add_log(Log(
+            event="Start Loop Triggered ",
+            detail="Instance Started",
+        ))
+
         core_thread = threading.Thread(target=core_loop, daemon=True)
         core_thread.start()
     return {"status": "started"}
@@ -74,6 +87,12 @@ def stop_loop():
         core_thread.join()
         core_thread = None
     manager.broadcast("idle")
+
+    log.add_log(Log(
+        event="Stop Loop Triggered ",
+        detail="Instance Stopped",
+    ))
+
     # close_camera()
     close_mic()
     return {"status": "stopping"}

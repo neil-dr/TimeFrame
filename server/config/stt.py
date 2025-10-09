@@ -15,9 +15,9 @@ ASSEMBLYAI_API_KEY = os.getenv("ASSEMBLYAI_API_KEY")
 CONNECTION_PARAMS = {
     "sample_rate": SAMPLE_RATE,
     "format_turns": False,
-    "min_end_of_turn_silence_when_confident": 2500, # 2.5s
-    "end_of_turn_confidence_threshold": 0.8,
-    "max_turn_silence": 3000 # 3s
+    # "min_end_of_turn_silence_when_confident": 2500, # 2.5s
+    "end_of_turn_confidence_threshold": 1,
+    "max_turn_silence": 2500 # 2.5s
 }
 API_ENDPOINT = f"wss://streaming.assemblyai.com/v3/ws?{urlencode(CONNECTION_PARAMS)}"
 

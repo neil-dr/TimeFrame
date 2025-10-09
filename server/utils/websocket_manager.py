@@ -7,6 +7,10 @@ import numpy as np
 from threading import Event
 import cv2
 from utils.frame_buffer import set_latest_frame
+from utils.logs_manager import LogManager, Log
+
+log = LogManager()
+
 
 class ConnectionManager:
     def __init__(self):
@@ -20,12 +24,20 @@ class ConnectionManager:
         with self.lock:
             self.active_connections.append(websocket)
             self.connected = True
+        log.add_log(Log(
+            event="WebSocket connected",
+            detail="WebSocket client connected",
+        ))
 
     def disconnect(self, websocket: WebSocket):
         with self.lock:
             if websocket in self.active_connections:
                 self.active_connections.remove(websocket)
                 self.connected = False
+        log.add_log(Log(
+            event="WebSocket disconnected",
+            detail="WebSocket client disconnected",
+        ))
 
     async def handle_events(self, websocket: WebSocket, stop_event: Event):
         try:
@@ -37,10 +49,16 @@ class ConnectionManager:
                         nparr = np.frombuffer(data, np.uint8)
                         frame = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
                         set_latest_frame(frame)
-                    
+
                     if "text" in raw and raw["text"] is not None:
                         payload = json.loads(raw["text"])
                         event, data = payload.get("event"), payload.get("data")
+
+                        log.add_log(Log(
+                            event=f"Event:[{event}] received from FE",
+                            detail=f"[PAYLOAD]: {raw["text"]}",
+                        ))
+
                         if self.connected and not stop_event.is_set():
 
                             if event == "back-to-listening":
@@ -63,6 +81,11 @@ class ConnectionManager:
         with self.lock:
             print(event)
             targets = list(self.active_connections)
+
+        log.add_log(Log(
+            event=f"Broadcast:[{event}] to FE",
+            detail=f"[PAYLOAD]: {data}",
+        ))
 
         for ws in targets:
             asyncio.run_coroutine_threadsafe(
