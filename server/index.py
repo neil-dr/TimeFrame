@@ -4,7 +4,7 @@ import asyncio
 import uvicorn
 from presence_detection.index import detection_loop
 from stt.index import start_stt
-from utils.camera_manager import open_camera, close_camera, capture_frames
+# from utils.camera_manager import open_camera, close_camera, capture_frames
 from utils.mic_manager import close_mic
 from utils.websocket_manager import manager
 from utils.state_manager import get_mode, set_mode
@@ -74,7 +74,7 @@ def stop_loop():
         core_thread.join()
         core_thread = None
     manager.broadcast("idle")
-    close_camera()
+    # close_camera()
     close_mic()
     return {"status": "stopping"}
 

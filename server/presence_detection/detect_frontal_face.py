@@ -1,5 +1,4 @@
 import cv2
-import time
 from ultralytics import YOLO
 import mediapipe as mp
 from types import *
