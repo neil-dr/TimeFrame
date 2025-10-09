@@ -2,7 +2,11 @@ from utils.websocket_manager import manager
 from utils.internet import is_connected
 from thinking.llm_online import think as think_online
 from thinking.ll_offline import think as think_offline
+from utils.logs_manager import LogManager, Conversation
+from datetime import datetime
+
 chat = []
+log = LogManager()
 
 
 def think(input_txt):
@@ -15,7 +19,16 @@ def think(input_txt):
     })
     if is_connected():
         # LLM and Guardrail Layer
+        q_timestamp = datetime.now().isoformat()
         output_txt = think_online(input_txt, chat)
+
+        log.add_conv(Conversation(
+            question=input_txt,
+            q_timestamp=q_timestamp,
+            answer=output_txt,
+            a_timestamp=datetime.now().isoformat()
+        ))
+
         push_message({
             "role": "assistant",
             "content": output_txt
@@ -25,7 +38,6 @@ def think(input_txt):
     else:
         video_id = think_offline(input_txt, chat)
         video_src = video_id + ".mp4"
-        # output_txt = """No internet connection detected, showing demo video instead now."""
         manager.broadcast(event="start-offline-speaking",
                           data=video_src)  # trigger speak mode
 

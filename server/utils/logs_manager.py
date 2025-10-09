@@ -116,7 +116,7 @@ class LogManager(metaclass=SingletonMeta):
             cur.execute("BEGIN IMMEDIATE;")
             if log_rows:
                 cur.executemany(
-                    "INSERT INTO stt_logs (instance_uuid, ts, mode, event, detail, type) "
+                    "INSERT INTO logs (instance_uuid, ts, mode, event, detail, type) "
                     "VALUES (?, ?, ?, ?, ?, ?)",
                     log_rows
                 )
@@ -180,7 +180,7 @@ class LogManager(metaclass=SingletonMeta):
         with self._get_connection() as conn:
             c = conn.cursor()
             c.execute("""
-                CREATE TABLE IF NOT EXISTS stt_logs (
+                CREATE TABLE IF NOT EXISTS logs (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     instance_uuid TEXT NOT NULL,
                     ts TEXT NOT NULL,
@@ -201,7 +201,7 @@ class LogManager(metaclass=SingletonMeta):
                 )
             """)
             c.execute(
-                "CREATE INDEX IF NOT EXISTS idx_logs_inst_ts ON stt_logs (instance_uuid, ts)")
+                "CREATE INDEX IF NOT EXISTS idx_logs_inst_ts ON logs (instance_uuid, ts)")
             c.execute(
                 "CREATE INDEX IF NOT EXISTS idx_conv_inst_qts ON conversations (instance_uuid, q_timestamp)")
             c.execute(

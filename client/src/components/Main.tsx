@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { socket } from '../apis/socket';
-import useVideoProviderService from '../hooks/_useVideoProviderService';
+import useVideoProviderService from '../hooks/useVideoProviderService';
 import ModeIcon from './ModeIcon';
 import FullscreenButton from './FullscreenButton';
 import Text from './Text';
@@ -19,6 +19,7 @@ export default function Main() {
   })
 
   function backToListeningTransition(type: 'textAnimation' | 'videoStream') {
+    console.log(speechComplete.current)
     if (type === 'textAnimation') {
       speechComplete.current.textAnimation = true
     } else if (type === 'videoStream') {

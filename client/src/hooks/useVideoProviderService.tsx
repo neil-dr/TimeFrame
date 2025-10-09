@@ -1,205 +1,166 @@
-import { useRef, useState, type RefObject } from 'react';
-import { socket } from '../apis/socket';
-import { AGENT_ID, DID_API_KEY_B64 } from '../config';
+import { useRef, useState, type RefObject } from "react";
+import { socket } from "../apis/socket";
+import { AGENT_ID, DID_CLIENT_KEY } from "../config";
+import * as sdk from "@d-id/client-sdk";
 
 /**
- * useDIDAgentStream – React hook for manual‑mode D‑ID Agents
+ * useDIDAgentStream – React hook for manual-mode D-ID Agents (SDK version)
  * -----------------------------------------------------------
- * ‑ Opens a WebRTC stream (no LLM).
- * ‑ `sendText()` posts a **video‑stream** request so the avatar voices the EXACT
- *   sentence you supply (bypasses /chat and its GPT pipeline).
+ * - Uses the D-ID Agents SDK for connection, video, and control.
+ * - `sendText()` speaks EXACTLY the text you pass (no LLM).
  */
 
-const DID = {
-  API_KEY_B64: DID_API_KEY_B64,
-  ROOT: 'https://api.d-id.com',
-  SERVICE: 'agents',
-} as const;
+// SDK auth: use the Agent "client key" (from Studio Embed or Client Key API)
+const auth = { type: "key", clientKey: DID_CLIENT_KEY as string } as const;
 
-// ▸ TYPES
-interface IceServer {
-  urls: string | string[];
-  username?: string;
-  credential?: string;
-}
-interface CreateStreamRes {
-  id: string;
-  offer: RTCSessionDescriptionInit;
-  ice_servers: IceServer[];
-  session_id: string;
-}
-interface SendMessageRes { id: string; status: string }
+// Optional SDK stream options
+const streamOptions = { compatibilityMode: "auto", streamWarmup: true } as const;
 
-export default function useDIDAgentStream(idleRef: RefObject<HTMLVideoElement | null>, remoteRef: RefObject<HTMLVideoElement | null>, onStartSpeaking: () => void, setMode: React.Dispatch<React.SetStateAction<Modes>>, onVideoStreamEnd: (type: 'textAnimation' | 'videoStream') => void) {
-  const [connected, setConnected] = useState(false)
-  const sessionId = useRef<string | null>(null);
-  const streamId = useRef<string | null>(null);
-  const pc = useRef<RTCPeerConnection | null>(null);
+// ────────────────────────────────────────────────────────────────────────────────
+
+function broadcastError(e: unknown) {
+  const message = JSON.stringify({ event: "speaking", data: String(e) })
+  socket.send(message);
+
+}
+
+export default function useDIDAgentStream(
+  idleRef: RefObject<HTMLVideoElement | null>,
+  remoteRef: RefObject<HTMLVideoElement | null>,
+  onStartSpeaking: () => void,
+  setMode: React.Dispatch<React.SetStateAction<Modes>>,
+  onVideoStreamEnd: (type: "textAnimation" | "videoStream") => void
+) {
+  const [connected, setConnected] = useState(false);
+  const agentManagerRef = useRef<Awaited<ReturnType<typeof sdk.createAgentManager>> | null>(null);
+
   const streamStartTime = useRef<number | null>(null);
 
-  // helper with auth header
-  const didFetch = (path: string, init: RequestInit = {}) =>
-    fetch(`${DID.ROOT}${path}`, {
-      ...init,
-      headers: {
-        Authorization: `Basic ${DID.API_KEY_B64}`,
-        'Content-Type': 'application/json',
-        ...(init.headers || {}),
-      },
-    });
-
-  const handleIceCandidate = async (e: RTCPeerConnectionIceEvent) => {
-    if (!e.candidate || !streamId.current) return;
-    const { candidate, sdpMid, sdpMLineIndex } = e.candidate;
-    await didFetch(`/${DID.SERVICE}/${AGENT_ID}/streams/${streamId.current}/ice`, {
-      method: 'POST',
-      body: JSON.stringify({ candidate, sdpMid, sdpMLineIndex, session_id: sessionId.current }),
-    });
-  };
-
-  function wireDataChannel(dc: RTCDataChannel) {
-    dc.onmessage = (event) => {
-      const msg = event.data;
-      /* 1 ▸ D-ID control messages */
-      if (msg.startsWith('stream/done')) {
-        if (streamStartTime.current) {
-          const endTime = Date.now();
-          const durationMs = endTime - streamStartTime.current;
-          const seconds = (durationMs / 1000).toFixed(2);
-          const minutes = (durationMs / 60000).toFixed(2);
-          console.log(`⏱️ Video duration: ${seconds}s (~${minutes} min)`);
-          streamStartTime.current = null;
-        }
-        console.log('🎬 stream/done  ← speech clip finished');
-        restartIdle()
-        fadeOut();
-        onVideoStreamEnd("videoStream")
-        return;
-      } else if (msg.startsWith("stream/started")) {
-        const message = JSON.stringify({ event: "speaking" });
-        socket.send(message)
-        setMode("speaking")
-        console.log('🎬 stream/started  ← speech clip started');
-        streamStartTime.current = Date.now();
-        fadeIn();
-        onStartSpeaking()
-      }
-    };
-  }
-
+  // ── UI helpers (unchanged) ───────────────────────────────────────────────────
   const restartIdle = () => {
     const v = idleRef.current;
     if (!v) return;
     v.currentTime = 0;
-    v.volume = 0
+    v.volume = 0;
     v.play().catch(() => { });
   };
 
   const fadeIn = () => {
-    if (remoteRef.current) remoteRef.current.style.opacity = '1';
+    if (remoteRef.current) remoteRef.current.style.opacity = "1";
   };
   const fadeOut = () => {
-    if (remoteRef.current) remoteRef.current.style.opacity = '0';
+    if (remoteRef.current) remoteRef.current.style.opacity = "0";
   };
 
-  const handleConnectionStateChange = () => {
-    const st = pc.current!.connectionState;
-    if (st === 'disconnected' || st === 'failed' || st === 'closed') {
-      console.log('D-ID session Disconnected')
-      setConnected(false)
+  // ── Build SDK callbacks on demand so they close over latest refs/state ───────
+  const callbacks = {
+    onSrcObjectReady(srcObject: MediaStream) {
+      try {
+        const v = remoteRef.current;
+        if (!v) return;
+        v.srcObject = srcObject;
+        v.onloadeddata = () => {
+          v.onloadeddata = null;
+          v.play().catch(console.error);
+        };
+      } catch (error) {
+        broadcastError(error)
+        throw error
+      }
+    },
+    onConnectionStateChange(state) {
+      try {
+        console.log("D-ID connection:", state);
+        setConnected(state === "connected");
+      } catch (error) {
+        broadcastError(error)
+        throw error
+      }
+    },
+    onVideoStateChange(state) {
+      try {
+        if (state === "STOP") {
+          restartIdle();
+          fadeOut();
+          onVideoStreamEnd("videoStream");
+        } else {
+          fadeIn();
+          onStartSpeaking();
+          socket.send(JSON.stringify({ event: "speaking" }));
+          setMode("speaking");
+        }
+      } catch (error) {
+        broadcastError(error)
+        throw error
+      }
+    },
+    onError(err) {
+      broadcastError(err)
+    },
+  } satisfies sdk.ManagerCallbacks;
+
+  // Create (or return existing) Agent Manager
+  const ensureManager = async () => {
+    if (!agentManagerRef.current) {
+      try {
+        agentManagerRef.current = await sdk.createAgentManager(AGENT_ID, {
+          auth,
+          callbacks,
+          // streamOptions,
+          mode: sdk.ChatMode.DirectPlayback,
+          streamOptions: {
+            outputResolution: 1080,
+          }
+        });
+
+      } catch (error) {
+        broadcastError(error)
+        throw error
+      }
     }
-  }
-
-  const handleTrack = (ev: RTCTrackEvent) => {
-    const [remote] = ev.streams;
-    const [videoTrack] = remote.getVideoTracks();
-
-    /* … inside handleTrack … */
-    videoTrack.addEventListener('unmute', () => {
-      if (!remoteRef.current) return;
-
-      // attach stream
-      remoteRef.current!.srcObject = remote;
-      remoteRef.current!.onloadeddata = () => {
-        remoteRef.current!.onloadeddata = null;
-        // fadeIn();                      // avatar now visible
-        remoteRef.current!.play().catch(console.error);
-      };
-    });
-
-    videoTrack.addEventListener('ended', fadeOut);
-    videoTrack.addEventListener('inactive', fadeOut);
+    return agentManagerRef.current!;
   };
 
-  /** Establish WebRTC & start video */
+  // ── Public API ───────────────────────────────────────────────────────────────
+  /** Establish connection to the Agent (WebRTC etc. handled by SDK) */
   const connect = async () => {
-    const res = await didFetch(`/${DID.SERVICE}/${AGENT_ID}/streams`, {
-      method: 'POST',
-      // body: JSON.stringify({ "stream_warmup": true }),
-    });
-    if (!res.ok) throw new Error(`stream create failed ${res.status}`);
-    const { id, offer, ice_servers, session_id } = (await res.json()) as CreateStreamRes;
-    streamId.current = id;
-    sessionId.current = session_id;
-
-    pc.current = new RTCPeerConnection({ iceServers: ice_servers });
-    const dc = pc.current.createDataChannel('JanusDataChannel');
-    wireDataChannel(dc);
-
-    pc.current.addEventListener('icecandidate', handleIceCandidate);
-    pc.current.addEventListener('connectionstatechange', handleConnectionStateChange)
-    pc.current.addEventListener('track', handleTrack);
-    pc.current.addEventListener('datachannel', e => {
-      console.log('inside data chanel')
-      wireDataChannel(e.channel);
-    });
-
-    await pc.current.setRemoteDescription(offer);
-    const answer = await pc.current.createAnswer();
-    await pc.current.setLocalDescription(answer);
-
-    await didFetch(`/${DID.SERVICE}/${AGENT_ID}/streams/${id}/sdp`, {
-      method: 'POST',
-      body: JSON.stringify({ answer, session_id }),
-    });
-    setConnected(true)
+    try {
+      const manager = await ensureManager();
+      await manager.connect();
+    } catch (error) {
+      broadcastError(error)
+      throw error
+    }
   };
 
-  /** Speak _exactly_ `text` (no LLM involved) */
-  const sendText = async (text: string): Promise<SendMessageRes> => {
-    if (!streamId.current || !sessionId.current) throw new Error('Stream not ready');
-
-    const payload = {
-      script: { type: 'text', input: text, ssml: true },
-      session_id: sessionId.current,
-    };
-
-    const res = await didFetch(`/${DID.SERVICE}/${AGENT_ID}/streams/${streamId.current}`, {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    });
-
-    if (!res.ok) throw new Error(`sendText failed ${res.status}: ${await res.text()}`);
-    return (await res.json()) as SendMessageRes;
+  /** Speak EXACTLY `text` (no LLM). Pass SSML in `text` if desired (<speak>...</speak>) */
+  const sendText = async (text: string) => {
+    try {
+      const manager = await ensureManager();
+      // You can call speak without a preceding connect(); the SDK will auto-connect,
+      // but we keep connect() explicit to match your flow.
+      await manager.speak({ type: "text", input: text });
+      // SDK handles streaming and will invoke onVideoStateChange callbacks.
+    } catch (error) {
+      broadcastError(error)
+      throw error
+    }
   };
 
   /** Cleanup */
   const destroy = async () => {
-    if (streamId.current) {
-      await didFetch(`/${DID.SERVICE}/${AGENT_ID}/streams/${streamId.current}`, {
-        method: 'DELETE',
-        body: JSON.stringify({ session_id: sessionId.current }),
-      });
+    const manager = await ensureManager();
+    await manager.disconnect(); // closes stream and chat session
+    if (remoteRef.current) {
+      try {
+        remoteRef.current.pause();
+        remoteRef.current.srcObject = null;
+      } catch (error) {
+        broadcastError(error)
+        throw error
+      }
     }
-    if (pc.current) {
-      pc.current.close();
-      pc.current.removeEventListener('icecandidate', handleIceCandidate);
-      pc.current.removeEventListener('track', handleTrack);
-      pc.current = null;
-    }
-    streamId.current = null;
-    sessionId.current = null;
-    setConnected(false)
+    setConnected(false);
   };
 
   return { connected, connect, sendText, destroy };

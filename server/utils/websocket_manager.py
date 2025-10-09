@@ -54,10 +54,10 @@ class ConnectionManager:
                         payload = json.loads(raw["text"])
                         event, data = payload.get("event"), payload.get("data")
 
-                        # log.add_log(Log(
-                        #     event=f"Event:[{event}] received from FE",
-                        #     detail=f"[PAYLOAD]: {raw["text"]}",
-                        # ))
+                        log.add_log(Log(
+                            event=f"Event:[{event}] received from FE",
+                            detail=f"[PAYLOAD]: {raw['text']}",
+                        ))
 
                         if self.connected and not stop_event.is_set():
 
@@ -66,15 +66,20 @@ class ConnectionManager:
                                 stt = get_stt_instance()
                                 stt.reset()
                                 print("🔊  Mic un-muted, back to listening")
+                                log.commit_to_db()
                             elif event == "speaking":
                                 set_mode("speaking")
                             elif event == "error":
                                 set_mode("error")
+                                log.commit_to_db()
                 except (ValueError, KeyError):
                     print("bad payload")
 
         except WebSocketDisconnect:
             print("client disconnected")
+            log.add_log(Log(
+                event=f"Websocket disconnected",
+            ))
             self.disconnect(websocket)
 
     def broadcast(self, event: str, data: str = None):

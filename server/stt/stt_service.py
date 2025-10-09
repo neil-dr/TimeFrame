@@ -104,6 +104,10 @@ class STTService:
 
         self.audio_thread = threading.Thread(target=stream_audio, daemon=True)
         self.connected = True
+        log.add_log(Log(
+            event="AAI Connection Established",
+            detail="N/A",
+        ))
         self.audio_thread.start()
 
     def on_message(self, ws, message):
@@ -166,10 +170,18 @@ class STTService:
 
     def on_error(self, ws, error):
         print(error)
+        log.add_log(Log(
+            event="AAI error",
+            detail=str(error),
+        ))
         self.exception = error
 
     def on_close(self, ws, code, reason):
         self.connected = False
+        log.add_log(Log(
+            event="AAI Connection closed",
+            detail="N/A",
+        ))
         print("STT stopped")
 
     def start(self, stop_event: Event):
