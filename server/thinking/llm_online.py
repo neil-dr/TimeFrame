@@ -21,9 +21,9 @@ def think(query: str, context: list):
 
     result = response.output[0].content[0].text
 
-    log = LogManager()
-    log.update_answer(
-        answer=f"[ONLINE]:{result}")
+    # log = LogManager()
+    # log.update_answer(
+    #     answer=f"[ONLINE]:{result}")
     return result
 
 

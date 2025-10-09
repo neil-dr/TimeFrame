@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { socket } from '../apis/socket';
-import useVideoProviderService from '../hooks/useVideoProviderService';
+import useVideoProviderService from '../hooks/_useVideoProviderService';
 import ModeIcon from './ModeIcon';
 import FullscreenButton from './FullscreenButton';
 import Text from './Text';
@@ -57,11 +57,7 @@ export default function Main() {
     const handleMsg = (event: MessageEvent<Modes>) => {
       const socketResponse: SocketResponse = JSON.parse(event.data)
       if (socketResponse.event === "start-video-connection") {
-        connect().catch(() => {
-          const message = JSON.stringify({ event: "error" });
-          socket.send(message)
-          setMode('away');
-        });
+        connect();
       } else if (socketResponse.event == "stt-transcription") {
         setTranscription(socketResponse.data!)
       } else if (socketResponse.event == "start-speaking") {

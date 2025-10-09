@@ -54,10 +54,10 @@ class ConnectionManager:
                         payload = json.loads(raw["text"])
                         event, data = payload.get("event"), payload.get("data")
 
-                        log.add_log(Log(
-                            event=f"Event:[{event}] received from FE",
-                            detail=f"[PAYLOAD]: {raw["text"]}",
-                        ))
+                        # log.add_log(Log(
+                        #     event=f"Event:[{event}] received from FE",
+                        #     detail=f"[PAYLOAD]: {raw["text"]}",
+                        # ))
 
                         if self.connected and not stop_event.is_set():
 

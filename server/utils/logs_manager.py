@@ -2,7 +2,6 @@ import sqlite3
 from datetime import datetime
 from threading import Lock
 from dataclasses import dataclass
-from utils.state_manager import get_mode
 import uuid
 
 # ----------------- Data classes -----------------
@@ -27,6 +26,7 @@ class Log:
         if self.ts is None:
             object.__setattr__(self, "ts", datetime.now().isoformat())
         if self.mode is None:
+            from utils.state_manager import get_mode
             object.__setattr__(self, "mode", get_mode())
 
     def as_tuple(self):
@@ -77,11 +77,11 @@ class SingletonMeta(type):
 # ----------------- Log Manager -----------------
 
 
-class # The `LogManager` class is responsible for managing logs and conversations in a database. It
+# The `LogManager` class is responsible for managing logs and conversations in a database. It
 # provides methods to add log entries and conversation entries to in-memory buffers, commit
 # these entries to a SQLite database, start a new logging instance with a unique identifier, and
 # retrieve the current instance ID.
-LogManager(metaclass=SingletonMeta):
+class LogManager(metaclass=SingletonMeta):
     def __init__(self, db_path="logs.db"):
         self.db_path = db_path
         self.current_instance_uuid = None
