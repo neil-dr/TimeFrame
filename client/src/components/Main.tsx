@@ -13,13 +13,38 @@ export default function Main() {
   const speakingText = useRef('')
   const idleRef = useRef<HTMLVideoElement>(null)
   const remoteRef = useRef<HTMLVideoElement>(null)
+  const speechComplete = useRef({
+    textAnimation: false,
+    videoStream: false
+  })
+
+  function backToListeningTransition(type: 'textAnimation' | 'videoStream') {
+    if (type === 'textAnimation') {
+      speechComplete.current.textAnimation = true
+    } else if (type === 'videoStream') {
+      speechComplete.current.videoStream = true
+    }
+
+    if (speechComplete.current.textAnimation && speechComplete.current.videoStream) {
+      const message = JSON.stringify({ event: "back-to-listening" });
+      socket.send(message)
+      setMode("listening")
+
+      // reset for next iteration
+      speechComplete.current = {
+        textAnimation: false,
+        videoStream: false
+      }
+    }
+  }
+
   const {
     transcription,
     setTranscription,
     onStartSpeaking
-  } = useTextDisplay(speakingText)
+  } = useTextDisplay(speakingText, backToListeningTransition)
 
-  const { connected, connect, sendText, destroy } = useVideoProviderService(idleRef, remoteRef, onStartSpeaking, setMode, transcription)
+  const { connected, connect, sendText, destroy } = useVideoProviderService(idleRef, remoteRef, onStartSpeaking, setMode, backToListeningTransition)
   const pendingTextsRef = useRef<string[]>([]);
   useCameraSender();
 
@@ -115,6 +140,7 @@ export default function Main() {
     if (mode == "listening" && speakingText.current != "") {
       setTranscription(null)
     }
+    console.log('mode', mode)
   }, [mode])
 
   useEffect(() => {

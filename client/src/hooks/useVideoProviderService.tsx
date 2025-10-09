@@ -30,7 +30,7 @@ interface CreateStreamRes {
 }
 interface SendMessageRes { id: string; status: string }
 
-export default function useDIDAgentStream(idleRef: RefObject<HTMLVideoElement | null>, remoteRef: RefObject<HTMLVideoElement | null>, onStartSpeaking: () => void, setMode: React.Dispatch<React.SetStateAction<Modes>>, transcription: string | null) {
+export default function useDIDAgentStream(idleRef: RefObject<HTMLVideoElement | null>, remoteRef: RefObject<HTMLVideoElement | null>, onStartSpeaking: () => void, setMode: React.Dispatch<React.SetStateAction<Modes>>, onVideoStreamEnd: (type: 'textAnimation' | 'videoStream') => void) {
   const [connected, setConnected] = useState(false)
   const sessionId = useRef<string | null>(null);
   const streamId = useRef<string | null>(null);
@@ -73,15 +73,7 @@ export default function useDIDAgentStream(idleRef: RefObject<HTMLVideoElement | 
         console.log('🎬 stream/done  ← speech clip finished');
         restartIdle()
         fadeOut();
-
-        // while (!transcription){
-        //   // wait for transcription to be set
-        // }
-
-        // notify backend to get back to listening
-        const message = JSON.stringify({ event: "back-to-listening" });
-        socket.send(message)
-        setMode("listening")
+        onVideoStreamEnd("videoStream")
         return;
       } else if (msg.startsWith("stream/started")) {
         const message = JSON.stringify({ event: "speaking" });

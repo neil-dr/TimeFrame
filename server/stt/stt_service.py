@@ -35,6 +35,12 @@ class STTService:
         self.muted = False
         self.stop_event: Event | None = None
         self.user_speak = False  # whether we've received any transcription yet
+        self.buffered_transcripts = []      # stores EOT transcriptions during 2s window
+        self.eot_timer = None               # holds reference to timer thread
+        self.eot_active = False             # whether the 2s collection window is active
+        self.accepting = True
+        self.eot_deadline = None
+        self.lock = threading.Lock()
 
     @classmethod
     def get_instance(cls):
@@ -42,9 +48,19 @@ class STTService:
         return cls()
 
     def reset(self):
-        self.muted = False
-        self.user_speak = False
-        self.stt_start_time = time.time()
+        with self.lock:
+            self.muted = False
+            self.user_speak = False
+            self.stt_start_time = time.time()
+
+            # Reset EOT collection state
+            self.accepting = True
+            self.eot_deadline = None
+            self.eot_active = False
+            self.buffered_transcripts = []
+            if self.eot_timer:
+                self.eot_timer.cancel()
+                self.eot_timer = None
 
     def on_open(self, ws):
         def stream_audio():
@@ -84,24 +100,50 @@ class STTService:
         self.audio_thread.start()
 
     def on_message(self, ws, message):
+        # Drop anything that arrives after the 2s cutoff (strongest guarantee)
+        if self.eot_active and self.eot_deadline and time.time() >= self.eot_deadline:
+            return
+        
+        if not self.accepting:
+            return  # ignore entirely after cutoff (fallback to the above)
+
         try:
             data = json.loads(message)
-            if 'transcript' in data:
-                self.user_speak = True
-                if data.get('end_of_turn', False):
-                    print(data['transcript'])
-                    manager.broadcast(event="stt-transcription",
-                                      data=data['transcript'])
-                    self.muted = True
-                    print("Shifting to Thinking mode. Mic is now muted.")
-                    log = LogManager()
-                    log.insert_question(
-                        question=f"[ONLINE]:{data['transcript']}")
-                    think(data['transcript'])  # start thinking mode
-                else:
-                    # send data['transcript'] as in event
-                    manager.broadcast(event="stt-transcription",
-                                      data=data['transcript'])
+            if 'transcript' not in data:
+                return
+
+            transcript = data['transcript']
+            self.user_speak = True
+
+            # Always broadcast live transcription
+            manager.broadcast(event="stt-transcription", data=transcript)
+
+            # Handle end of turn (EOT)
+            if data.get('end_of_turn', False):
+                # First EOT in this segment
+                with self.lock:
+                    if not self.eot_active:
+                        self.eot_deadline = time.time() + 2.0
+                        self.eot_active = True
+                        self.muted = True
+                        self.buffered_transcripts = [transcript]
+
+                        print(
+                            "🛑 First EOT detected — mic muted, waiting 2s for late chunks...")
+                        print("🧾 Transcript:", transcript)
+                        
+                        # Start 2s grace window
+                        self.eot_timer = threading.Timer(
+                            2.0, self._finalize_transcription)
+                        self.eot_timer.start()
+
+                    else:
+                        # Subsequent EOTs within grace window
+                        print(
+                            "🕒 Additional EOT received within 2s window — appending text...")
+                        print("🧾 Transcript:", transcript)
+                        self.buffered_transcripts.append(transcript)
+
         except Exception as e:
             self.exception = e
             self.stop()
@@ -142,3 +184,14 @@ class STTService:
         if self.ws_app:
             self.ws_app.close()
             manager.broadcast(event="stop-video-connection")
+
+    def _finalize_transcription(self):
+        with self.lock:
+            self.accepting = False # do not accept transcription after this point
+            full_text = " ".join(self.buffered_transcripts).strip()
+            print(f"🧠 Final combined transcript: {full_text}")
+
+        # Log & Think
+        log = LogManager()
+        log.insert_question(question=f"[ONLINE]:{full_text}")
+        think(full_text)

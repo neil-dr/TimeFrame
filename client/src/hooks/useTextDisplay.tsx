@@ -7,7 +7,7 @@ const MAX_VISIBLE_CHARS = 150;  // rolling window size (e.g., 120–200 works we
 const SENTENCE_PAUSE_MS = 450;  // pause after . ! ? …
 const CLAUSE_PAUSE_MS = 220;    // pause after , ; :
 
-export default function useTextDisplay(speakingText: React.RefObject<string>) {
+export default function useTextDisplay(speakingText: React.RefObject<string>, onTextAnimationEnd: (type: 'textAnimation' | 'videoStream') => void) {
   const revealAbortRef = useRef<{ aborted: boolean }>({ aborted: false });
   const [transcription, setTranscription] = useState<string | null>(null)
 
@@ -69,8 +69,8 @@ export default function useTextDisplay(speakingText: React.RefObject<string>) {
     // start a new reveal pass
     const text = speakingText.current || '';
     revealSpokenText(text)
-    .then(()=>setTranscription(null))
-    .catch(console.error);
+      .then(() => onTextAnimationEnd("textAnimation"))
+      .catch(console.error);
   }
 
 

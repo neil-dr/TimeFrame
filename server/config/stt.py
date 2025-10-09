@@ -21,4 +21,4 @@ CONNECTION_PARAMS = {
 }
 API_ENDPOINT = f"wss://streaming.assemblyai.com/v3/ws?{urlencode(CONNECTION_PARAMS)}"
 
-SILENCE_LIMIT = 5 # in seconds
+SILENCE_LIMIT = 8 # in seconds
